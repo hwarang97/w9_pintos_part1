@@ -8,6 +8,7 @@
 #include "threads/synch.h"
 #include "threads/thread.h"
 
+
 /* See [8254] for hardware details of the 8254 timer chip. */
 
 #if TIMER_FREQ < 19
@@ -28,6 +29,7 @@ static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
+static struct list sleep_list;
 
 /* Sets up the 8254 Programmable Interval Timer (PIT) to
    interrupt PIT_FREQ times per second, and registers the
@@ -43,6 +45,7 @@ timer_init (void) {
 	outb (0x40, count >> 8);
 
 	intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+	list_init(&sleep_list);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -71,6 +74,7 @@ timer_calibrate (void) {
 }
 
 /* Returns the number of timer ticks since the OS booted. */
+//현재 OS시간
 int64_t
 timer_ticks (void) {
 	enum intr_level old_level = intr_disable ();
@@ -90,11 +94,17 @@ timer_elapsed (int64_t then) {
 /* Suspends execution for approximately TICKS timer ticks. */
 void
 timer_sleep (int64_t ticks) {
-	int64_t start = timer_ticks ();
-
 	ASSERT (intr_get_level () == INTR_ON);
-	while (timer_elapsed (start) < ticks)
-		thread_yield ();
+    if(ticks<=0){    //예외처리 바로 ticks 음수거나 0보다 작으면 바로 반환
+		return;
+	}
+	int64_t now;  //현재 OS 기준 시간 받아주는 변수
+	now=timer_ticks();  //현재 시간을 호출하는 함수 now에 저장
+	thread_current()->wake_tick=now+ticks;  //현재 스레드 호출하는 함수 깨어날 시간 저장해주기
+	enum intr_level org_level=intr_disable();  //interrupt 방해 방지 
+	list_push_back(&sleep_list, &thread_current()->sleep_elem); //있는 라이브러르 함수 sleep_list 맨 뒤에 추가
+	thread_block(); 
+	intr_set_level(org_level);  //interrupt 방해해제
 }
 
 /* Suspends execution for approximately MS milliseconds. */
@@ -125,6 +135,17 @@ timer_print_stats (void) {
 static void
 timer_interrupt (struct intr_frame *args UNUSED) {
 	ticks++;
+	struct list_elem *first=list_begin(&sleep_list); // sleep_list 첫 순환 변수 first로 생성
+	struct list_elem *next;  //전체 순환을 위한 next변수 선언
+	while(first!=list_end(&sleep_list)){   //전체 순회 시작은 first에 다음 노드는 next에 미리 넣어두는 방식
+		next=list_next(first);
+		struct thread *tr = list_entry(first, struct thread, sleep_elem);
+		if(tr->wake_tick<=ticks){
+			list_remove(&tr->sleep_elem);
+			thread_unblock(tr);
+		}
+		first=next;    //마지막에 다시 next값을 first로 변경
+	}
 	thread_tick ();
 }
 

@@ -2,6 +2,10 @@
     "name": "pintos-dev",
     "dockerFile": "Dockerfile",
     "remoteUser": "jungle",
+    "remoteEnv": {
+        "PATH": "${containerWorkspaceFolder}/pintos/utils:${containerEnv:PATH}"
+    },
+    "postCreateCommand": "bash -lc \"grep -qxF 'source ${containerWorkspaceFolder}/pintos/activate' ~/.bashrc || echo 'source ${containerWorkspaceFolder}/pintos/activate' >> ~/.bashrc\"",
     "customizations": {
         "vscode": {
             "extensions": [
