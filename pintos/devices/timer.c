@@ -8,7 +8,7 @@
 #include "threads/synch.h"
 #include "threads/thread.h"
 
-/* See [8254] for hardware details of the 8254 timer chip. */
+/* See [8254] for hardare details of the 8254 timer chip. */
 
 #if TIMER_FREQ < 19
 #error 8254 timer requires TIMER_FREQ >= 19
@@ -73,10 +73,10 @@ timer_calibrate (void) {
 /* Returns the number of timer ticks since the OS booted. */
 int64_t
 timer_ticks (void) {
-	enum intr_level old_level = intr_disable ();
-	int64_t t = ticks;
-	intr_set_level (old_level);
-	barrier ();
+	enum intr_level old_level = intr_disable (); //
+	int64_t t = ticks; //
+	intr_set_level (old_level); //
+	barrier (); //
 	return t;
 }
 
@@ -89,12 +89,19 @@ timer_elapsed (int64_t then) {
 
 /* Suspends execution for approximately TICKS timer ticks. */
 void
-timer_sleep (int64_t ticks) {
-	int64_t start = timer_ticks ();
+timer_sleep (int64_t ticks) { // 몇 분 뒤에 일어나라
+	int64_t start = timer_ticks ();//OS 실행 후 tick 
 
-	ASSERT (intr_get_level () == INTR_ON);
-	while (timer_elapsed (start) < ticks)
-		thread_yield ();
+	// ASSERT (intr_get_level () == INTR_ON);
+	// while (timer_elapsed (start) < ticks) // 이거 계산이 어떻게 된거지?
+	// thread_yield (); //CPU 넘기기 이게 왜 지금 busy waiting인가?
+	struct thread *t = thread_current ();
+	t->wake_tick = start + ticks;//틱 계산. 언제 깨울지를 어떻게 알려주지? 현재시간 + 깨어날 시간
+	intr_disable(); //
+	list_push_back(&sleep_list, &t->elem);//sleep_elem? 
+	thread_block();
+	intr_enable();
+	
 }
 
 /* Suspends execution for approximately MS milliseconds. */
@@ -124,8 +131,21 @@ timer_print_stats (void) {
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED) {
-	ticks++;
-	thread_tick ();
+	ticks++; //이게 그러면 매 초마다 도는거구나 
+	thread_tick (); //무언가 또 다른 통계용 틱을 매 초 추가
+
+	
+	
+/*
+* sleep list에 header부터 접근 (포인터를 만들어서 접근)
+* 시간을 비교해서 (한번에 하나만 하면 되나?)(시간 비교 어떻게 할지 감이 덜 잡힌듯) (아까 thread에 추가로 만든 걔 )
+* 만료가 됐다면 인터룹트 걸고 해당 쓰레드를 sleep에서 제거(헤더만 바꿔줌) 
+* 그리고 레디 리스트에 추가하고, 블록.. 상태를 지금 바꿔줘야 하나? 
+* wake_ticks도 웬만하면 0 
+* 인터룹트 끔 
+* 만료 안됐다면 그냥 넘어감 그냥 리턴 =? unblock함수가 상태도 바꿔주고 이동도 시켜줌. 그걸 써서 
+*/
+	
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
