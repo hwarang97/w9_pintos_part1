@@ -121,10 +121,10 @@ sema_up (struct semaphore *sema) {
 			}
 			else{
 				sema->value++;
-	            intr_set_level (old_level);  //아니라면 바로 yield호출
-				thread_yield();
+	            intr_set_level (old_level);  
+				thread_yield(); //아니라면 바로 yield호출
 			}
-			return;
+			return; 
 	}
 }
 	sema->value++;

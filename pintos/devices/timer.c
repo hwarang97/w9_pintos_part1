@@ -29,13 +29,13 @@ static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
-static struct list sleep_list;
+static struct list sleep_list; // sleep thread를 모아두는 리스트 생성
 
 /* Sets up the 8254 Programmable Interval Timer (PIT) to
    interrupt PIT_FREQ times per second, and registers the
    corresponding interrupt. */
 void
-timer_init (void) {
+timer_init (void) {         //OS가 실행될 때 모두 초기화하고 시작하는 함수 타이머 시스템 같은
 	/* 8254 input frequency divided by TIMER_FREQ, rounded to
 	   nearest. */
 	uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;
@@ -45,7 +45,7 @@ timer_init (void) {
 	outb (0x40, count >> 8);
 
 	intr_register_ext (0x20, timer_interrupt, "8254 Timer");
-	list_init(&sleep_list);
+	list_init(&sleep_list); //리스트 초기화
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -91,6 +91,7 @@ timer_elapsed (int64_t then) {
 	return timer_ticks () - then;
 }
 
+
 /* Suspends execution for approximately TICKS timer ticks. */
 void
 timer_sleep (int64_t ticks) {
@@ -101,10 +102,10 @@ timer_sleep (int64_t ticks) {
 	int64_t now;  //현재 OS 기준 시간 받아주는 변수
 	now=timer_ticks();  //현재 시간을 호출하는 함수 now에 저장
 	thread_current()->wake_tick=now+ticks;  //현재 스레드 호출하는 함수 깨어날 시간 저장해주기
-	enum intr_level org_level=intr_disable();  //interrupt 방해 방지 
-	list_push_back(&sleep_list, &thread_current()->sleep_elem); //있는 라이브러르 함수 sleep_list 맨 뒤에 추가
-	thread_block(); 
-	intr_set_level(org_level);  //interrupt 방해해제
+	enum intr_level old_level=intr_disable();  //interrupt 방해 방지 현재 interrupt를 저장하고 
+	list_push_back(&sleep_list, &thread_current()->sleep_elem); //있는 라이브러르 함수 sleep_list 목록을 부르고 지금 스레드를 맨 뒤에 추가
+	thread_block(); //스레드 블락
+	intr_set_level(old_level);  //interrupt 방해해제 저장했던 interrupt를 다시 불러오기 old에는 on이 저장
 }
 
 /* Suspends execution for approximately MS milliseconds. */
@@ -139,7 +140,7 @@ timer_interrupt (struct intr_frame *args UNUSED) {
 	struct list_elem *next;  //전체 순환을 위한 next변수 선언
 	while(first!=list_end(&sleep_list)){   //전체 순회 시작은 first에 다음 노드는 next에 미리 넣어두는 방식
 		next=list_next(first);
-		struct thread *tr = list_entry(first, struct thread, sleep_elem);
+		struct thread *tr = list_entry(first, struct thread, sleep_elem); // 실제 원소를 thread로 복원하는 함수
 		if(tr->wake_tick<=ticks){
 			list_remove(&tr->sleep_elem);
 			thread_unblock(tr);
