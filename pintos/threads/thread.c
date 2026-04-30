@@ -64,8 +64,9 @@ static void init_thread (struct thread *, const char *name, int priority);
 static void do_schedule(int status);
 static void schedule (void);
 static tid_t allocate_tid (void);
-static bool thread_priority_vs(const struct list_elem *a,const struct list_elem *b, void *aux UNUSED);  //비교 함수 선언 thread_vs const타입 비교하는 원소의 값을 수정하지 못하게 제어 즉 읽기 전용
-
+bool thread_priority_vs(const struct list_elem *a,const struct list_elem *b, void *aux UNUSED);  //비교 함수 선언 thread_vs const타입 비교하는 원소의 값을 수정하지 못하게 제어 즉 읽기 전용
+static int load_avg;  //
+static struct list all_list;  // recent_cpu가 전체 thread에 적용되어야하기에 
 
 
 /* Returns true if T appears to point to a valid thread. */
@@ -114,6 +115,7 @@ thread_init (void) {
 	lock_init (&tid_lock);
 	list_init (&ready_list);
 	list_init (&destruction_req);
+	list_init(&all_list);
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -217,6 +219,7 @@ thread_create (const char *name, int priority,
 
 	return tid;
 }
+
 
 /* Puts the current thread to sleep.  It will not be scheduled
    again until awoken by thread_unblock().
@@ -424,7 +427,16 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->tf.rsp = (uint64_t) t + PGSIZE - sizeof (void *);
 	t->priority = priority;
 	t->magic = THREAD_MAGIC;
+	if(t==initial_thread){   //부모가 없는 첫 main thread라면
+		t->nice=0;
+		t->recent_cpu=0;
+	}
+	else{                     //일반 새 thread라면 
+		t->nice=thread_current()->nice;  //부모 스레드의 nice값을 그대로 가져온다
+	    t->recent_cpu=thread_current()->recent_cpu;  //부모 스레드의 recent_cpu값을 그대로 가져온다.
+    }
 }
+	
 
 /* Chooses and returns the next thread to be scheduled.  Should
    return a thread from the run queue, unless the run queue is
@@ -603,7 +615,7 @@ allocate_tid (void) {
 
 	return tid;
 }
-static bool
+bool
 thread_priority_vs(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){   //비교함수
 	struct thread *ta = list_entry(a, struct thread, elem);  //a elem을 포함하는 thread를 찾음
 	struct thread *tb = list_entry(b, struct thread, elem);  //b elem을 포함하는 thread를 찾음
