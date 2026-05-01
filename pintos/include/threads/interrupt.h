@@ -16,7 +16,7 @@ enum intr_level intr_enable (void);
 enum intr_level intr_disable (void);
 
 /* Interrupt stack frame. */
-struct gp_registers {
+struct gp_registers { //General Purpose register
 	uint64_t r15;
 	uint64_t r14;
 	uint64_t r13;
@@ -28,7 +28,7 @@ struct gp_registers {
 	uint64_t rsi;
 	uint64_t rdi;
 	uint64_t rbp;
-	uint64_t rdx;
+	uint64_t rdx; //시스템콜의 번호 
 	uint64_t rcx;
 	uint64_t rbx;
 	uint64_t rax;

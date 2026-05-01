@@ -73,7 +73,7 @@ snprintf (char *buffer, size_t buf_size, const char *format, ...) {
    In userspace, the console is file descriptor 1. */
 int
 printf (const char *format, ...) {
-	va_list args;
+	va_list args; //variable Argument : 가변 인자 함수. 인자 개수가 그때그때 달라짐 
 	int retval;
 
 	va_start (args, format);

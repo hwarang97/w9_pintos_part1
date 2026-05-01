@@ -204,6 +204,8 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
+	while (1){
+	}
 	return -1;
 }
 
@@ -328,6 +330,9 @@ load (const char *file_name, struct intr_frame *if_) {
 	off_t file_ofs;
 	bool success = false;
 	int i;
+
+	// 파일이름과 인자를 파싱해서 변수에 삽입하는게 뒤에서 쓰는 데에 좋을 듯
+	// 배열로 선언해서 저장한 다음에 안에서 이용하는게 맞음
 
 	/* Allocate and activate page directory. */
 	t->pml4 = pml4_create ();
