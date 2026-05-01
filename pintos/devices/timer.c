@@ -8,7 +8,8 @@
 #include "threads/synch.h"
 #include "threads/thread.h"
 
-/* See [8254] for hardare details of the 8254 timer chip. */
+
+/* See [8254] for hardware details of the 8254 timer chip. */
 
 #if TIMER_FREQ < 19
 #error 8254 timer requires TIMER_FREQ >= 19
@@ -20,8 +21,6 @@
 /* Number of timer ticks since OS booted. */
 static int64_t ticks;
 
-struct list free_list;
-
 /* Number of loops per timer tick.
    Initialized by timer_calibrate(). */
 static unsigned loops_per_tick;
@@ -30,12 +29,13 @@ static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
+static struct list sleep_list; // sleep thread를 모아두는 리스트 생성
 
 /* Sets up the 8254 Programmable Interval Timer (PIT) to
    interrupt PIT_FREQ times per second, and registers the
    corresponding interrupt. */
 void
-timer_init (void) {
+timer_init (void) {         //OS가 실행될 때 모두 초기화하고 시작하는 함수 타이머 시스템 같은
 	/* 8254 input frequency divided by TIMER_FREQ, rounded to
 	   nearest. */
 	uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;
@@ -45,6 +45,7 @@ timer_init (void) {
 	outb (0x40, count >> 8);
 
 	intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+	list_init(&sleep_list); //리스트 초기화
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -73,12 +74,13 @@ timer_calibrate (void) {
 }
 
 /* Returns the number of timer ticks since the OS booted. */
+//현재 OS시간
 int64_t
 timer_ticks (void) {
-	enum intr_level old_level = intr_disable (); //
-	int64_t t = ticks; //
-	intr_set_level (old_level); //
-	barrier (); //
+	enum intr_level old_level = intr_disable ();
+	int64_t t = ticks;
+	intr_set_level (old_level);
+	barrier ();
 	return t;
 }
 
@@ -89,22 +91,21 @@ timer_elapsed (int64_t then) {
 	return timer_ticks () - then;
 }
 
+
 /* Suspends execution for approximately TICKS timer ticks. */
 void
-timer_sleep (int64_t ticks) { // 몇 분 뒤에 일어나라
-	int64_t start = timer_ticks ();//OS 실행 후 tick 
-
-	// ASSERT (intr_get_level () == INTR_ON);
-	// while (timer_elapsed (start) < ticks) // 이거 계산이 어떻게 된거지?
-	// thread_yield (); //CPU 넘기기 이게 왜 지금 busy waiting인가?
-	if (ticks > 0) {
-	struct thread *t = thread_current ();
-	t->wake_ticks = start + ticks;//틱 계산. 언제 깨울지를 어떻게 알려주지? 현재시간 + 깨어날 시간
-	intr_disable(); //
-	list_push_back(&free_list, &t->elem);//sleep_elem? 
-	thread_block();
-	intr_enable();
+timer_sleep (int64_t ticks) {
+	ASSERT (intr_get_level () == INTR_ON);
+    if(ticks<=0){    //예외처리 바로 ticks 음수거나 0보다 작으면 바로 반환
+		return;
 	}
+	int64_t now;  //현재 OS 기준 시간 받아주는 변수
+	now=timer_ticks();  //현재 시간을 호출하는 함수 now에 저장
+	thread_current()->wake_tick=now+ticks;  //현재 스레드 호출하는 함수 깨어날 시간 저장해주기
+	enum intr_level old_level=intr_disable();  //interrupt 방해 방지 현재 interrupt를 저장하고 
+	list_push_back(&sleep_list, &thread_current()->sleep_elem); //있는 라이브러르 함수 sleep_list 목록을 부르고 지금 스레드를 맨 뒤에 추가
+	thread_block(); //스레드 블락
+	intr_set_level(old_level);  //interrupt 방해해제 저장했던 interrupt를 다시 불러오기 old에는 on이 저장
 }
 
 /* Suspends execution for approximately MS milliseconds. */
@@ -134,22 +135,19 @@ timer_print_stats (void) {
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED) {
-	ticks++; //이게 그러면 매 초마다 도는거구나 
-	thread_tick (); //무언가 또 다른 통계용 틱을 매 초 추가
-
-	intr_disable();
-
-	intr_enable();
-/*
-* sleep list에 header부터 접근 (포인터를 만들어서 접근)
-* 시간을 비교해서 (한번에 하나만 하면 되나?)(시간 비교 어떻게 할지 감이 덜 잡힌듯) (아까 thread에 추가로 만든 걔 )
-* 만료가 됐다면 인터룹트 걸고 해당 쓰레드를 sleep에서 제거(헤더만 바꿔줌) 
-* 그리고 레디 리스트에 추가하고, 블록.. 상태를 지금 바꿔줘야 하나? 
-* wake_ticks도 웬만하면 0 
-* 인터룹트 끔 
-* 만료 안됐다면 그냥 넘어감 그냥 리턴 =? unblock함수가 상태도 바꿔주고 이동도 시켜줌. 그걸 써서 
-*/
-	
+	ticks++;
+	struct list_elem *first=list_begin(&sleep_list); // sleep_list 첫 순환 변수 first로 생성
+	struct list_elem *next;  //전체 순환을 위한 next변수 선언
+	while(first!=list_end(&sleep_list)){   //전체 순회 시작은 first에 다음 노드는 next에 미리 넣어두는 방식
+		next=list_next(first);
+		struct thread *tr = list_entry(first, struct thread, sleep_elem); // 실제 원소를 thread로 복원하는 함수
+		if(tr->wake_tick<=ticks){
+			list_remove(&tr->sleep_elem);
+			thread_unblock(tr);
+		}
+		first=next;    //마지막에 다시 next값을 first로 변경
+	}
+	thread_tick ();
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

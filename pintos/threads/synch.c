@@ -66,7 +66,7 @@ sema_down (struct semaphore *sema) {
 
 	old_level = intr_disable ();
 	while (sema->value == 0) {
-		list_push_back (&sema->waiters, &thread_current ()->elem);
+		list_insert_ordered(&sema->waiters, &thread_current()->elem,thread_priority_vs, NULL); //정렬삽입 코드로 변경 
 		thread_block ();
 	}
 	sema->value--;
@@ -109,13 +109,27 @@ sema_up (struct semaphore *sema) {
 	ASSERT (sema != NULL);
 
 	old_level = intr_disable ();
-	if (!list_empty (&sema->waiters))
-		thread_unblock (list_entry (list_pop_front (&sema->waiters),
-					struct thread, elem));
+	if(!list_empty(&sema->waiters)){ //리스트가 비어 있지 않다면
+		struct list_elem *front=list_pop_front(&sema->waiters);  //리스트에서 가장 앞에 원소를 꺼내와서 front에 저장한다
+		struct thread *ft=list_entry(front, struct thread, elem); //front원소에서 thread를 반환받아 ft에 저장한다
+		thread_unblock(ft);  // ft를 ready_list로 보낸다
+		if(ft->priority>thread_current()->priority){  //ft스레드의 우선순위가 현재 실행중인 스레드보다 우선순위가 높다면
+			if(intr_context()){   //지금 인터럽트 핸들러 안에 있다면
+				sema->value++;
+	            intr_set_level (old_level);
+				intr_yield_on_return(); //끝나고 yield를 호출하도록 예약해라
+			}
+			else{
+				sema->value++;
+	            intr_set_level (old_level);  
+				thread_yield(); //아니라면 바로 yield호출
+			}
+			return; 
+	}
+}
 	sema->value++;
 	intr_set_level (old_level);
 }
-
 static void sema_test_helper (void *sema_);
 
 /* Self-test for semaphores that makes control "ping-pong"
@@ -187,6 +201,11 @@ lock_acquire (struct lock *lock) {
 	ASSERT (lock != NULL);
 	ASSERT (!intr_context ());
 	ASSERT (!lock_held_by_current_thread (lock));
+	if(lock->holder!=NULL){ //lock을 잡고 있는 스레드가 존재한다면
+		if(thread_current()->priority>lock->holder->priority){ // 현재 진행 중인 스레드보다 그 락을 잡고있는 스레드의 우선순위가 높다면
+			lock->holder->priority=thread_current()->priority; // 락을 잡고있는 스레드의 우선순위에 현재 진행중인 스레드의 우선순위를 기부한다.
+		}
+	}
 
 	sema_down (&lock->semaphore);
 	lock->holder = thread_current ();

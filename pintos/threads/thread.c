@@ -40,6 +40,8 @@ static struct lock tid_lock;
 /* Thread destruction requests */
 static struct list destruction_req;
 
+
+
 /* Statistics. */
 static long long idle_ticks;    /* # of timer ticks spent idle. */
 static long long kernel_ticks;  /* # of timer ticks in kernel threads. */
@@ -62,6 +64,10 @@ static void init_thread (struct thread *, const char *name, int priority);
 static void do_schedule(int status);
 static void schedule (void);
 static tid_t allocate_tid (void);
+bool thread_priority_vs(const struct list_elem *a,const struct list_elem *b, void *aux UNUSED);  //비교 함수 선언 thread_vs const타입 비교하는 원소의 값을 수정하지 못하게 제어 즉 읽기 전용
+static int load_avg;  //
+static struct list all_list;  // recent_cpu가 전체 thread에 적용되어야하기에 
+
 
 /* Returns true if T appears to point to a valid thread. */
 #define is_thread(t) ((t) != NULL && (t)->magic == THREAD_MAGIC)
@@ -109,6 +115,7 @@ thread_init (void) {
 	lock_init (&tid_lock);
 	list_init (&ready_list);
 	list_init (&destruction_req);
+	list_init(&all_list);
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -206,9 +213,13 @@ thread_create (const char *name, int priority,
 
 	/* Add to run queue. */
 	thread_unblock (t);
+	if(t->priority>thread_current()->priority){  //새로 만들어진 스레드의 우선순위가 현재 스레드의 우선순위보다 높다면 thread_yield()를 호출한다.
+		thread_yield(); //현재 실행 중인 스레드가 호출하는 주체
+	}
 
 	return tid;
 }
+
 
 /* Puts the current thread to sleep.  It will not be scheduled
    again until awoken by thread_unblock().
@@ -234,15 +245,15 @@ thread_block (void) {
    update other data. */
 void
 thread_unblock (struct thread *t) {
-	enum intr_level old_level;
+	enum intr_level old_level;  //interrupt 저장 변수
 
 	ASSERT (is_thread (t));
 
-	old_level = intr_disable ();
-	ASSERT (t->status == THREAD_BLOCKED);
-	list_push_back (&ready_list, &t->elem);
-	t->status = THREAD_READY;
-	intr_set_level (old_level);
+	old_level = intr_disable (); // 기존 interrupt 상태를 저장하고 interrupt를 비활성화
+	ASSERT (t->status == THREAD_BLOCKED); //새로 들어온 스레드가 block상태가 맞는지 확인
+	list_insert_ordered(&ready_list, &t->elem,thread_priority_vs, NULL); //ready_list에 우선순위 기준으로 정렬 삽입, aux는 사용하지 않으므로 NULL
+	t->status = THREAD_READY; //상태변경 ready상태로
+	intr_set_level (old_level); // 저장해둔 interrupt 상태로 복구
 }
 
 /* Returns the name of the running thread. */
@@ -303,7 +314,7 @@ thread_yield (void) {
 
 	old_level = intr_disable ();
 	if (curr != idle_thread)
-		list_push_back (&ready_list, &curr->elem);
+		list_insert_ordered(&ready_list, &curr->elem,thread_priority_vs, NULL); // 정렬 삽입으로 구조 개선
 	do_schedule (THREAD_READY);
 	intr_set_level (old_level);
 }
@@ -312,6 +323,13 @@ thread_yield (void) {
 void
 thread_set_priority (int new_priority) {
 	thread_current ()->priority = new_priority;
+	if(!list_empty(&ready_list)){  //먼저 list_ready가 비어 있는지 체크 //front사용시 오류
+		struct list_elem *front=list_front(&ready_list);  //맨 앞에 있는 원소 보기
+		struct thread *ft = list_entry(front, struct thread, elem); //원소를 통해서 thread주소로 접근
+		if(thread_current()->priority<ft->priority){     //현재 스레드랑 우선순위 비교
+			thread_yield();           //현재 스레드보다 ready_list 맨 앞의 원소의 우선순위가 더 높다면 therad_yield()호출
+		}
+	}
 }
 
 /* Returns the current thread's priority. */
@@ -409,7 +427,16 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->tf.rsp = (uint64_t) t + PGSIZE - sizeof (void *);
 	t->priority = priority;
 	t->magic = THREAD_MAGIC;
+	if(t==initial_thread){   //부모가 없는 첫 main thread라면
+		t->nice=0;
+		t->recent_cpu=0;
+	}
+	else{                     //일반 새 thread라면 
+		t->nice=thread_current()->nice;  //부모 스레드의 nice값을 그대로 가져온다
+	    t->recent_cpu=thread_current()->recent_cpu;  //부모 스레드의 recent_cpu값을 그대로 가져온다.
+    }
 }
+	
 
 /* Chooses and returns the next thread to be scheduled.  Should
    return a thread from the run queue, unless the run queue is
@@ -587,4 +614,15 @@ allocate_tid (void) {
 	lock_release (&tid_lock);
 
 	return tid;
+}
+bool
+thread_priority_vs(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){   //비교함수
+	struct thread *ta = list_entry(a, struct thread, elem);  //a elem을 포함하는 thread를 찾음
+	struct thread *tb = list_entry(b, struct thread, elem);  //b elem을 포함하는 thread를 찾음
+	if(ta->priority > tb->priority){ //ta와 tb의 우선순위를 비교
+		return true;    //반환 타입 bool true일 경우 b앞에 삽입
+	}
+    else{
+		return false;  //false일 경우는 b를 지나가 다음 대상이랑 비교 반복
+	}
 }

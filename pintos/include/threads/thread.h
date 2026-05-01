@@ -90,12 +90,12 @@ struct thread {
 	tid_t tid;                          /* Thread identifier. */
 	enum thread_status status;          /* Thread state. */
 	char name[16];                      /* Name (for debugging purposes). */
-	int priority;                       /* Priority. */
-	int64_t wake_ticks;
-
+	int priority;                   /* Priority. */
+    int64_t wake_tick; // thread에 깨어날 시간 저장공간 생성
 	/* Shared between thread.c and synch.c. */
-	struct list_elem elem;              /* List element. */
-
+	struct list_elem elem, sleep_elem, all_elem; // sleep_list 리스트 연결 정보 저장공간 생성       /* List element. */
+    int nice;
+	int recent_cpu;
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
@@ -145,3 +145,7 @@ int thread_get_load_avg (void);
 void do_iret (struct intr_frame *tf);
 
 #endif /* threads/thread.h */
+
+bool thread_priority_vs(const struct list_elem *a,  //어디에서든 사용할 수 있게 헤더에 추가 타입 static제거
+                        const struct list_elem *b,
+                        void *aux UNUSED);
