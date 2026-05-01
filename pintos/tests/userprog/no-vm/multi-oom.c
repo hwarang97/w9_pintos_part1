@@ -1,26 +1,4 @@
-/* Recursively forks until the child fails to fork.
-   We expect that at least 28 copies can run.
-   
-   We count how many children your kernel was able to execute
-   before it fails to start a new process.  We require that,
-   if a process doesn't actually get to start, exec() must
-   return -1, not a valid PID.
-
-   We repeat this process 10 times, checking that your kernel
-   allows for the same level of depth every time.
-
-   In addition, some processes will spawn children that terminate
-   abnormally after allocating some resources.
-
-   We set EXPECTED_DEPTH_TO_PASS heuristically by
-   giving *large* margin on the value from our implementation.
-   If you seriously think there is no memory leak in your code
-   but it fails with EXPECTED_DEPTH_TO_PASS,
-   please manipulate it and report us the actual output.
-   
-   Orignally written by Godmar Back <godmar@gmail.com>
-   Modified by Minkyu Jung, Jinyoung Oh <cs330_ta@casys.kaist.ac.kr>
-*/
+/* 자식이 fork에 실패할 때까지 재귀적으로 fork한다. */
 
 #include <debug.h>
 #include <stdio.h>
@@ -36,19 +14,13 @@ static const int EXPECTED_REPETITIONS = 10;
 
 int make_children (void);
 
-/* Open a number of files (and fail to close them).
-   The kernel must free any kernel resources associated
-   with these file descriptors. */
+/* 여러 파일을 열고 닫지 않는다. */
 static void
 consume_some_resources (void)
 {
   int fd, fdmax = 126;
 
-  /* Open as many files as we can, up to fdmax.
-	 Depending on how file descriptors are allocated inside
-	 the kernel, open() may fail if the kernel is low on memory.
-	 A low-memory condition in open() should not lead to the
-	 termination of the process.  */
+  /* fdmax까지 가능한 한 많은 파일을 연다. */
   for (fd = 0; fd < fdmax; fd++) {
 #ifdef EXTRA2
 	  if (fd != 0 && (random_ulong () & 1)) {
@@ -65,8 +37,7 @@ consume_some_resources (void)
   }
 }
 
-/* Consume some resources, then terminate this process
-   in some abnormal way.  */
+/* 일부 리소스를 소비한 뒤 이 프로세스를 종료한다. */
 static int NO_INLINE
 consume_some_resources_and_die (void)
 {

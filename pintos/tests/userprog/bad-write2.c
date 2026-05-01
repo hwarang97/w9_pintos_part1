@@ -1,5 +1,4 @@
-/* This program attempts to write to kernel memory. 
-   This should terminate the process with a -1 exit code. */
+/* 이 프로그램은 커널 메모리에 쓰려고 시도한다. */
 
 #include "tests/lib.h"
 #include "tests/main.h"

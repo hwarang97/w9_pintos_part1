@@ -1,7 +1,4 @@
-/* Child process of mmap-exit.
-   Mmaps a file and writes to it via the mmap'ing, then exits
-   without calling munmap.  The data in the mapped region must be
-   written out at program termination. */
+/* mmap-exit의 자식 프로세스. */
 
 #include <string.h>
 #include <syscall.h>

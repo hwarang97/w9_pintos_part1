@@ -1,5 +1,4 @@
-/* Accesses a bad address.
-   The process must be terminated with -1 exit code. */
+/* 잘못된 주소에 접근한다. */
 
 #include "tests/lib.h"
 #include "tests/main.h"

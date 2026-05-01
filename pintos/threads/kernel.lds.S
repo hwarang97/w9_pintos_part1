@@ -2,15 +2,15 @@
 
 OUTPUT_FORMAT("elf64-x86-64")
 OUTPUT_ARCH(i386:x86-64)
-ENTRY(_start)			/* Kernel starts at "start" symbol. */
+ENTRY(_start)			/* kernel은 "start" symbol에서 시작한다. */
 
 SECTIONS
 {
-  /* Specifies the virtual address for the kernel base. */
+  /* kernel base용 virtual address를 지정한다. */
 	. = LOADER_KERN_BASE + LOADER_PHYS_BASE;
 
 	PROVIDE(start = .);
-  /* Kernel starts with code, followed by read-only data and writable data. */
+  /* kernel은 code로 시작하고 read-only data와 writable data가 뒤따른다. */
 	.text : AT(LOADER_PHYS_BASE) {
 		*(.entry)
 		*(.text .text.* .stub .gnu.linkonce.t.*)
@@ -22,7 +22,7 @@ SECTIONS
 
   .data : { *(.data) *(.data.*)}
 
-  /* BSS (zero-initialized data) is after everything else. */
+  /* BSS(0으로 초기화된 data)는 다른 모든 것 뒤에 있다. */
   PROVIDE(_start_bss = .);
   .bss : { *(.bss) }
   PROVIDE(_end_bss = .);

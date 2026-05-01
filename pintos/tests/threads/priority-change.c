@@ -1,6 +1,4 @@
-/* Verifies that lowering a thread's priority so that it is no
-   longer the highest-priority thread in the system causes it to
-   yield immediately. */
+/* 스레드 우선순위를 낮춰 더 이상 최고 우선순위가 아니게 만들면 양보가 일어나는지 검증한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -12,7 +10,7 @@ static thread_func changing_thread;
 void
 test_priority_change (void) 
 {
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
   msg ("Creating a high-priority thread 2.");

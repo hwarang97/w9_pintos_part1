@@ -1,4 +1,4 @@
-/* Checks if file-mapped pages are lazy loaded  */
+/* 파일 매핑 페이지가 지연 로드되는지 확인한다. */
 
 #include <string.h>
 #include <syscall.h>
@@ -23,7 +23,7 @@ test_main (void)
 	size_t page_cnt;
 	void *pa;
 
-	/* Map pages to a file */
+	/* 페이지들을 파일에 매핑한다 */
 	CHECK ((handle = open ("small.txt")) > 1, "open \"small.txt\"");
 	small_size = sizeof small;
 	msg ("sizeof small: %zu", small_size);
@@ -33,7 +33,7 @@ test_main (void)
 
 	msg ("initial pages status");
 	for (i = 0 ; i < page_cnt ; i++) {
-		// All pages for the file should not be loaded yet.
+		// 파일의 모든 페이지는 아직 로드되지 않아야 한다.
 		pa = get_phys_addr(&actual[i*PAGE_SIZE]);
 		CHECK (pa == 0, "check if page is not loaded");
 	}
@@ -45,11 +45,11 @@ test_main (void)
 		for (j = 0 ; j < page_cnt ; j++) {
 			pa = get_phys_addr(&actual[j*PAGE_SIZE]);
 			if (j <= i) {
-				// Pages that have been accessed should be loaded
+				// 접근한 페이지는 로드되어 있어야 한다
 				CHECK (pa != 0, "check if page is loaded");
 			}
 			else {
-				// Pages that have not been accessed should not be loaded.
+				// 접근하지 않은 페이지는 로드되어 있지 않아야 한다.
 				CHECK (pa == 0, "check if page is not loaded");
 			}
 		}

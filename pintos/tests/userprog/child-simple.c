@@ -1,6 +1,4 @@
-/* Child process run by exec-multiple, exec-one, wait-simple, and
-   wait-twice tests.
-   Just prints a single message and terminates. */
+/* exec-multiple, exec-one, wait-simple 등이 실행하는 자식 프로세스. */
 
 #include <stdio.h>
 #include "tests/lib.h"

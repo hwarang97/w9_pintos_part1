@@ -1,7 +1,4 @@
-/* This is just for fun.
-     
-   Written by Minkyu Jung, Jinyoung Oh <cs330_ta@casys.kaist.ac.kr>
-*/
+/* 재미 삼아 넣은 간단한 dup2 테스트다. */
 
 #include <debug.h>
 #include <stdio.h>

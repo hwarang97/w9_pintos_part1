@@ -1,5 +1,4 @@
-/* After fork, the child process will read and close the opened file
-   and the parent will access the closed file. */
+/* fork 이후 자식 프로세스가 열린 파일을 읽고 닫는다. */
 
 #include <string.h>
 #include <syscall.h>

@@ -1,5 +1,4 @@
-/* Reads from a file into a bad address.
-   The process must be terminated with -1 exit code. */
+/* 파일에서 읽은 데이터를 잘못된 주소에 쓰려고 한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

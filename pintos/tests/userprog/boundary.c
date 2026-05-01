@@ -1,6 +1,4 @@
-/* Utility function for tests that try to break system calls by
-   passing them data that crosses from one virtual page to
-   another. */
+/* 페이지 경계 근처 포인터로 시스템 콜을 깨뜨리려는 테스트용 유틸리티 함수. */
 
 #include <inttypes.h>
 #include <round.h>
@@ -9,8 +7,7 @@
 
 static char dst[8192];
 
-/* Returns the beginning of a page.  There are at least 2048
-   modifiable bytes on either side of the pointer returned. */
+/* 페이지의 시작 주소를 반환한다. 이 페이지에는 최소 2048바이트의 여유가 있다. */
 void *
 get_boundary_area (void) 
 {
@@ -20,8 +17,7 @@ get_boundary_area (void)
   return p;
 }
 
-/* Returns a copy of SRC split across the boundary between two
-   pages. */
+/* SRC의 복사본을 두 페이지의 경계에 걸치도록 만들어 반환한다. */
 char *
 copy_string_across_boundary (const char *src) 
 {

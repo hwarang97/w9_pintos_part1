@@ -1,5 +1,4 @@
-/* This program attempts to read kernel memory. 
-   This should terminate the process with a -1 exit code. */
+/* 이 프로그램은 커널 메모리를 읽으려고 시도한다. */
 
 #include "tests/lib.h"
 #include "tests/main.h"

@@ -1,10 +1,10 @@
-/* Test program for printf() in lib/stdio.c.
+/* lib/stdio.c의 printf() 테스트 프로그램.
 
-   Attempts to test printf() functionality that is not
-   sufficiently tested elsewhere in Pintos.
+   Pintos의 다른 곳에서 충분히 테스트되지 않는 printf() 기능을
+   테스트하려고 시도한다.
 
-   This is not a test we will run on your submitted projects.
-   It is here for completeness.
+   이 테스트는 제출한 프로젝트에서 실행할 테스트는 아니다.
+   완결성을 위해 여기에 들어 있다.
 */
 
 #undef NDEBUG
@@ -16,7 +16,7 @@
 #include <string.h>
 #include "threads/test.h"
 
-/* Number of failures so far. */
+/* 지금까지의 실패 수. */
 static int failure_cnt;
 
 static void
@@ -40,14 +40,13 @@ checkf (const char *expect, const char *format, ...)
     printf ("okay\n");
 }
 
-/* Test printf() implementation. */
+/* printf() 구현을 테스트한다. */
 void
 test (void) 
 {
   printf ("Testing formats:");
 
-  /* Check that commas show up in the right places, for positive
-     numbers. */
+  /* 양수에서 쉼표가 올바른 위치에 나타나는지 확인한다. */
   checkf ("1", "%'d", 1);
   checkf ("12", "%'d", 12);
   checkf ("123", "%'d", 123);
@@ -68,8 +67,7 @@ test (void)
   checkf ("123,456,789,012,345,678", "%'lld", 123456789012345678LL);
   checkf ("1,234,567,890,123,456,789", "%'lld", 1234567890123456789LL);
 
-  /* Check that commas show up in the right places, for positive
-     numbers. */
+  /* 음수에서 쉼표가 올바른 위치에 나타나는지 확인한다. */
   checkf ("-1", "%'d", -1);
   checkf ("-12", "%'d", -12);
   checkf ("-123", "%'d", -123);
@@ -90,7 +88,7 @@ test (void)
   checkf ("-123,456,789,012,345,678", "%'lld", -123456789012345678LL);
   checkf ("-1,234,567,890,123,456,789", "%'lld", -1234567890123456789LL);
   
-  /* Check signed integer conversions. */
+  /* 부호 있는 정수 변환을 확인한다. */
   checkf ("    0", "%5d", 0);
   checkf ("0    ", "%-5d", 0);
   checkf ("   +0", "%+5d", 0);
@@ -141,7 +139,7 @@ test (void)
   checkf ("123456", "%5.2d", 123456);
   checkf ("123456", "%d", 123456);
 
-  /* Check unsigned integer conversions. */
+  /* 부호 없는 정수 변환을 확인한다. */
   checkf ("    0", "%5u", 0);
   checkf ("    0", "%5o", 0);
   checkf ("    0", "%5x", 0);
@@ -169,13 +167,13 @@ test (void)
   checkf ("0X1E240", "%#5X", 123456);
   checkf ("0x0001e240", "%#10.8x", 123456);
 
-  /* Character and string conversions. */
+  /* 문자와 문자열 변환. */
   checkf ("foobar", "%c%c%c%c%c%c", 'f', 'o', 'o', 'b', 'a', 'r');
   checkf ("  left-right  ", "%6s%s%-7s", "left", "-", "right");
   checkf ("trim", "%.4s", "trimoff");
   checkf ("%%", "%%%%");
 
-  /* From Cristian Cadar's automatic test case generator. */
+  /* 자동 테스트 케이스 생성기에서 가져온 Cristian Cadar의 테스트. */
   checkf (" abcdefgh", "%9s", "abcdefgh");
   checkf ("36657730000", "%- o", (unsigned) 036657730000);
   checkf ("4139757568", "%- u", (unsigned) 4139757568UL);

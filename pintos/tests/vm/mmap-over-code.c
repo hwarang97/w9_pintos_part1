@@ -1,4 +1,4 @@
-/* Verifies that mapping over the code segment is disallowed. */
+/* 코드 세그먼트 위로 매핑하는 것이 금지되는지 검증한다. */
 
 #include <stdint.h>
 #include <round.h>

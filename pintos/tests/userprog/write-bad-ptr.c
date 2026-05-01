@@ -1,5 +1,4 @@
-/* Passes an invalid pointer to the write system call.
-   The process must be terminated with -1 exit code. */
+/* write 시스템 콜에 유효하지 않은 포인터를 넘긴다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

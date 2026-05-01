@@ -1,5 +1,4 @@
-/* Writes data spanning two pages in virtual address space,
-   which must succeed. */
+/* 가상 주소 공간에서 두 페이지에 걸친 데이터를 쓴다. */
 
 #include <string.h>
 #include <syscall.h>

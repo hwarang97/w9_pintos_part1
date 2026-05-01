@@ -1,7 +1,4 @@
-/* Opens a file and then runs a subprocess that tries to close
-   the file.  (Pintos does not have inheritance of file handles,
-   so this must fail.)  The parent process then attempts to use
-   the file handle, which must succeed. */
+/* 파일을 연 뒤, 그 파일 디스크립터를 닫으려는 하위 프로세스를 실행한다. */
 
 #include <stdio.h>
 #include <syscall.h>

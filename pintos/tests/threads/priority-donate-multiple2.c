@@ -1,18 +1,4 @@
-/* The main thread acquires locks A and B, then it creates three
-   higher-priority threads.  The first two of these threads block
-   acquiring one of the locks and thus donate their priority to
-   the main thread.  The main thread releases the locks in turn
-   and relinquishes its donated priorities, allowing the third thread
-   to run.
-
-   In this test, the main thread releases the locks in a different
-   order compared to priority-donate-multiple.c.
-   
-   Written by Godmar Back <gback@cs.vt.edu>. 
-   Based on a test originally submitted for Stanford's CS 140 in
-   winter 1999 by Matt Franklin <startled@leland.stanford.edu>,
-   Greg Hutchins <gmh@leland.stanford.edu>, Yu Ping Hu
-   <yph@cs.stanford.edu>.  Modified by arens. */
+/* 메인 스레드가 락 A와 B를 획득한 뒤 세 스레드를 만들어 다중 기부를 테스트한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -29,10 +15,10 @@ test_priority_donate_multiple2 (void)
 {
   struct lock a, b;
 
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
-  /* Make sure our priority is the default. */
+  /* 현재 우선순위가 기본값인지 확인한다. */
   ASSERT (thread_get_priority () == PRI_DEFAULT);
 
   lock_init (&a);

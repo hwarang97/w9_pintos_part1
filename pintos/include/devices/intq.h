@@ -4,33 +4,32 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 
-/* An "interrupt queue", a circular buffer shared between
-   kernel threads and external interrupt handlers.
+/* "interrupt queue"는 커널 스레드와 외부 interrupt handler가 공유하는
+   원형 버퍼다.
 
-   Interrupt queue functions can be called from kernel threads or
-   from external interrupt handlers.  Except for intq_init(),
-   interrupts must be off in either case.
+   interrupt queue 함수들은 커널 스레드나 외부 interrupt handler에서
+   호출할 수 있다. intq_init()을 제외하면 두 경우 모두 interrupt가
+   꺼져 있어야 한다.
 
-   The interrupt queue has the structure of a "monitor".  Locks
-   and condition variables from threads/synch.h cannot be used in
-   this case, as they normally would, because they can only
-   protect kernel threads from one another, not from interrupt
-   handlers. */
+   interrupt queue는 "monitor" 구조를 가진다. 이 경우에는 일반적으로
+   쓰는 threads/synch.h의 lock과 condition variable을 사용할 수 없다.
+   그것들은 커널 스레드들끼리만 보호할 수 있고, interrupt handler로부터는
+   보호할 수 없기 때문이다. */
 
-/* Queue buffer size, in bytes. */
+/* queue 버퍼 크기, byte 단위. */
 #define INTQ_BUFSIZE 64
 
-/* A circular queue of bytes. */
+/* byte를 저장하는 원형 queue. */
 struct intq {
-	/* Waiting threads. */
-	struct lock lock;           /* Only one thread may wait at once. */
-	struct thread *not_full;    /* Thread waiting for not-full condition. */
-	struct thread *not_empty;   /* Thread waiting for not-empty condition. */
+	/* 대기 중인 스레드들. */
+	struct lock lock;           /* 한 번에 하나의 스레드만 기다릴 수 있다. */
+	struct thread *not_full;    /* not-full 조건을 기다리는 스레드. */
+	struct thread *not_empty;   /* not-empty 조건을 기다리는 스레드. */
 
-	/* Queue. */
-	uint8_t buf[INTQ_BUFSIZE];  /* Buffer. */
-	int head;                   /* New data is written here. */
-	int tail;                   /* Old data is read here. */
+	/* queue. */
+	uint8_t buf[INTQ_BUFSIZE];  /* 버퍼. */
+	int head;                   /* 새 데이터가 여기에 쓰인다. */
+	int tail;                   /* 오래된 데이터가 여기서 읽힌다. */
 };
 
 void intq_init (struct intq *);

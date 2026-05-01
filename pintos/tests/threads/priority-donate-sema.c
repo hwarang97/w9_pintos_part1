@@ -1,14 +1,4 @@
-/* Low priority thread L acquires a lock, then blocks downing a
-   semaphore.  Medium priority thread M then blocks waiting on
-   the same semaphore.  Next, high priority thread H attempts to
-   acquire the lock, donating its priority to L.
-
-   Next, the main thread ups the semaphore, waking up L.  L
-   releases the lock, which wakes up H.  H "up"s the semaphore,
-   waking up M.  H terminates, then M, then L, and finally the
-   main thread.
-
-   Written by Godmar Back <gback@cs.vt.edu>. */
+/* 낮은 우선순위 스레드 L이 락을 획득한 뒤 세마포어에서 블록되어 기부 동작을 테스트한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -31,10 +21,10 @@ test_priority_donate_sema (void)
 {
   struct lock_and_sema ls;
 
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
-  /* Make sure our priority is the default. */
+  /* 현재 우선순위가 기본값인지 확인한다. */
   ASSERT (thread_get_priority () == PRI_DEFAULT);
 
   lock_init (&ls.lock);

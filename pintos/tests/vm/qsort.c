@@ -3,7 +3,7 @@
 #include <debug.h>
 #include <random.h>
 
-/* Picks a pivot for the quicksort from the SIZE bytes in BUF. */
+/* BUF의 SIZE 바이트에서 quicksort용 피벗을 고른다. */
 static unsigned char
 pick_pivot (unsigned char *buf, size_t size) 
 {
@@ -11,10 +11,7 @@ pick_pivot (unsigned char *buf, size_t size)
   return buf[random_ulong () % size];
 }
 
-/* Checks whether the SIZE bytes in ARRAY are divided into an
-   initial LEFT_SIZE elements all less than PIVOT followed by
-   SIZE - LEFT_SIZE elements all greater than or equal to
-   PIVOT. */
+/* ARRAY의 SIZE 바이트가 피벗 기준으로 올바르게 나뉘었는지 확인한다. */
 static bool
 is_partitioned (const unsigned char *array, size_t size,
                 unsigned char pivot, size_t left_size) 
@@ -32,7 +29,7 @@ is_partitioned (const unsigned char *array, size_t size,
   return true;
 }
 
-/* Swaps the bytes at *A and *B. */
+/* *A와 *B의 바이트를 맞바꾼다. */
 static void
 swap (unsigned char *a, unsigned char *b) 
 {
@@ -41,9 +38,7 @@ swap (unsigned char *a, unsigned char *b)
   *b = t;
 }
 
-/* Partitions ARRAY in-place in an initial run of bytes all less
-   than PIVOT, followed by a run of bytes all greater than or
-   equal to PIVOT.  Returns the length of the initial run. */
+/* ARRAY를 제자리에서 분할해 앞쪽에는 피벗보다 작은 바이트들이 오게 한다. */
 static size_t
 partition (unsigned char *array, size_t size, int pivot) 
 {
@@ -53,8 +48,7 @@ partition (unsigned char *array, size_t size, int pivot)
 
   for (;;)
     {
-      /* Move FIRST forward to point to first element greater than
-         PIVOT. */
+      /* FIRST를 앞으로 움직여 피벗보다 큰 첫 원소를 가리키게 한다. */
       for (;;)
         {
           if (first == last)
@@ -69,8 +63,7 @@ partition (unsigned char *array, size_t size, int pivot)
         }
       left_size--;
 
-      /* Move LAST backward to point to last element no bigger
-         than PIVOT. */
+      /* LAST를 뒤로 움직여 피벗보다 크지 않은 마지막 원소를 가리키게 한다. */
       for (;;)
         {
           last--;
@@ -86,16 +79,13 @@ partition (unsigned char *array, size_t size, int pivot)
             left_size--;
         }
 
-      /* By swapping FIRST and LAST we extend the starting and
-         ending sequences that pass and fail, respectively,
-         PREDICATE. */
+      /* FIRST와 LAST를 맞바꾸어 앞쪽/뒤쪽 분할 영역을 확장한다. */
       swap (first, last);
       first++;
     }
 }
 
-/* Returns true if the SIZE bytes in BUF are in nondecreasing
-   order, false otherwise. */
+/* BUF의 SIZE 바이트가 비감소 순서이면 true를 반환한다. */
 static bool
 is_sorted (const unsigned char *buf, size_t size) 
 {
@@ -108,8 +98,7 @@ is_sorted (const unsigned char *buf, size_t size)
   return true;
 }
 
-/* Sorts the SIZE bytes in BUF into nondecreasing order, using
-   the quick-sort algorithm. */
+/* quicksort를 사용해 BUF의 SIZE 바이트를 비감소 순서로 정렬한다. */
 void
 qsort_bytes (unsigned char *buf, size_t size) 
 {

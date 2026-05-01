@@ -1,5 +1,4 @@
-/* Tries to execute a nonexistent process.
-   The exec system call must return -1. */
+/* 존재하지 않는 프로세스 실행을 시도한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

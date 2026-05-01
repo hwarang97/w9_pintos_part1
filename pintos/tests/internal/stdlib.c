@@ -1,10 +1,10 @@
-/* Test program for sorting and searching in lib/stdlib.c.
+/* lib/stdlib.c의 정렬과 검색 테스트 프로그램.
 
-   Attempts to test the sorting and searching functionality that
-   is not sufficiently tested elsewhere in Pintos.
+   Pintos의 다른 곳에서 충분히 테스트되지 않는 정렬과 검색 기능을
+   테스트하려고 시도한다.
 
-   This is not a test we will run on your submitted projects.
-   It is here for completeness.
+   이 테스트는 제출한 프로젝트에서 실행할 테스트는 아니다.
+   완결성을 위해 여기에 들어 있다.
 */
 
 #undef NDEBUG
@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include "threads/test.h"
 
-/* Maximum number of elements in an array that we will test. */
+/* 테스트할 배열의 최대 원소 수. */
 #define MAX_CNT 4096
 
 static void shuffle (int[], size_t);
@@ -23,7 +23,7 @@ static int compare_ints (const void *, const void *);
 static void verify_order (const int[], size_t);
 static void verify_bsearch (const int[], size_t);
 
-/* Test sorting and searching implementations. */
+/* 정렬과 검색 구현을 테스트한다. */
 void
 test (void) 
 {
@@ -40,12 +40,12 @@ test (void)
           static int values[MAX_CNT];
           int i;
 
-          /* Put values 0...CNT in random order in VALUES. */
+          /* 0...CNT 값을 임의 순서로 VALUES에 넣는다. */
           for (i = 0; i < cnt; i++)
             values[i] = i;
           shuffle (values, cnt);
   
-          /* Sort VALUES, then verify ordering. */
+          /* VALUES를 정렬한 뒤 순서를 검증한다. */
           qsort (values, cnt, sizeof *values, compare_ints);
           verify_order (values, cnt);
           verify_bsearch (values, cnt);
@@ -56,7 +56,7 @@ test (void)
   printf ("stdlib: PASS\n");
 }
 
-/* Shuffles the CNT elements in ARRAY into random order. */
+/* ARRAY의 CNT개 원소를 임의 순서로 섞는다. */
 static void
 shuffle (int *array, size_t cnt) 
 {
@@ -71,9 +71,7 @@ shuffle (int *array, size_t cnt)
     }
 }
 
-/* Returns 1 if *A is greater than *B,
-   0 if *A equals *B,
-   -1 if *A is less than *B. */
+/* *A가 *B보다 크면 1, 같으면 0, 작으면 -1을 반환한다. */
 static int
 compare_ints (const void *a_, const void *b_) 
 {
@@ -83,7 +81,7 @@ compare_ints (const void *a_, const void *b_)
   return *a < *b ? -1 : *a > *b;
 }
 
-/* Verifies that ARRAY contains the CNT ints 0...CNT-1. */
+/* ARRAY가 CNT개의 정수 0...CNT-1을 포함하는지 검증한다. */
 static void
 verify_order (const int *array, size_t cnt) 
 {
@@ -93,20 +91,20 @@ verify_order (const int *array, size_t cnt)
     ASSERT (array[i] == i);
 }
 
-/* Checks that bsearch() works properly in ARRAY.  ARRAY must
-   contain the values 0...CNT-1. */
+/* ARRAY에서 bsearch()가 제대로 동작하는지 확인한다. ARRAY는 0...CNT-1
+   값을 포함해야 한다. */
 static void
 verify_bsearch (const int *array, size_t cnt) 
 {
   int not_in_array[] = {0, -1, INT_MAX, MAX_CNT, MAX_CNT + 1, MAX_CNT * 2};
   int i;
 
-  /* Check that all the values in the array are found properly. */
+  /* 배열 안의 모든 값을 제대로 찾는지 확인한다. */
   for (i = 0; (size_t) i < cnt; i++) 
     ASSERT (bsearch (&i, array, cnt, sizeof *array, compare_ints)
             == array + i);
 
-  /* Check that some values not in the array are not found. */
+  /* 배열에 없는 일부 값들이 발견되지 않는지 확인한다. */
   not_in_array[0] = cnt;
   for (i = 0; (size_t) i < sizeof not_in_array / sizeof *not_in_array; i++) 
     ASSERT (bsearch (&not_in_array[i], array, cnt, sizeof *array, compare_ints)

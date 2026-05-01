@@ -1,4 +1,4 @@
-/* Wait for a process that will be killed for bad behavior. */
+/* 잘못된 동작 때문에 종료될 프로세스를 기다린다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

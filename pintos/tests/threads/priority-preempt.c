@@ -1,10 +1,4 @@
-/* Ensures that a high-priority thread really preempts.
-
-   Based on a test originally submitted for Stanford's CS 140 in
-   winter 1999 by by Matt Franklin
-   <startled@leland.stanford.edu>, Greg Hutchins
-   <gmh@leland.stanford.edu>, Yu Ping Hu <yph@cs.stanford.edu>.
-   Modified by arens. */
+/* 높은 우선순위 스레드가 실제로 선점하는지 확인한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -17,10 +11,10 @@ static thread_func simple_thread_func;
 void
 test_priority_preempt (void) 
 {
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
-  /* Make sure our priority is the default. */
+  /* 현재 우선순위가 기본값인지 확인한다. */
   ASSERT (thread_get_priority () == PRI_DEFAULT);
 
   thread_create ("high-priority", PRI_DEFAULT + 1, simple_thread_func, NULL);

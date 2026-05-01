@@ -1,13 +1,4 @@
-/* Checks that recent_cpu and priorities are updated for blocked
-   threads.
-
-   The main thread sleeps for 25 seconds, spins for 5 seconds,
-   then releases a lock.  The "block" thread spins for 20 seconds
-   then attempts to acquire the lock, which will block for 10
-   seconds (until the main thread releases it).  If recent_cpu
-   decays properly while the "block" thread sleeps, then the
-   block thread should be immediately scheduled when the main
-   thread releases the lock. */
+/* 블록된 스레드의 recent_cpu와 우선순위가 올바르게 갱신되는지 확인한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"

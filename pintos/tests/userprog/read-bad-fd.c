@@ -1,6 +1,4 @@
-/* Tries to read from an invalid fd,
-   which must either fail silently or terminate the process with
-   exit code -1. */
+/* 유효하지 않은 fd에서 읽으려고 시도한다. */
 
 #include <limits.h>
 #include <syscall.h>

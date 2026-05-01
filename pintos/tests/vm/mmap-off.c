@@ -1,4 +1,4 @@
-/* Tries to mmap with offset > 0. */
+/* 0보다 큰 오프셋으로 mmap을 시도한다. */
 
 #include <syscall.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/* Verifies that memory mappings persist after file close. */
+/* 파일을 닫은 뒤에도 메모리 매핑이 유지되는지 검증한다. */
 
 #include <string.h>
 #include <syscall.h>

@@ -1,5 +1,4 @@
-/* Maps the same file into memory twice and verifies that the
-   same data is readable in both. */
+/* 같은 파일을 메모리에 두 번 매핑하고 두 매핑의 동작을 검증한다. */
 
 #include <string.h>
 #include <syscall.h>

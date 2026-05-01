@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Alleged RC4 algorithm encryption state. */
+/* RC4로 알려진 알고리즘의 암호화 상태. */
 struct arc4
   {
     uint8_t s[256];
