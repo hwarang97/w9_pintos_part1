@@ -1,6 +1,4 @@
-/* Tries to mmap an invalid fd,
-   which must either fail silently or terminate the process with
-   exit code -1. */
+/* 유효하지 않은 fd로 mmap을 시도한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

@@ -1,5 +1,4 @@
-/* Tests that cond_signal() wakes up the highest-priority thread
-   waiting in cond_wait(). */
+/* cond_signal()이 가장 높은 우선순위의 스레드를 깨우는지 테스트한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -18,7 +17,7 @@ test_priority_condvar (void)
 {
   int i;
   
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
   lock_init (&lock);

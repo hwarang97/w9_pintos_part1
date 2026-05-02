@@ -1,9 +1,4 @@
-/* Child process run by multi-child-fd test.
-
-   Attempts to close the file descriptor passed as the first
-   command-line argument. Since KAIST new Pintos inherits opened
-   files descriptors over exec() for fork() system calls, 
-   this should work well */
+/* multi-child-fd 테스트가 실행하는 자식 프로세스. */
 
 #include <ctype.h>
 #include <stdio.h>

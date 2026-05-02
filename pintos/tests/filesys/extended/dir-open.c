@@ -1,5 +1,4 @@
-/* Opens a directory, then tries to write to it, which must
-   fail. */
+/* 디렉터리를 연 뒤 쓰기를 시도한다. 이 작업은 실패해야 한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

@@ -1,4 +1,4 @@
-/* Verifies that memory mappings at address 0 are disallowed. */
+/* 주소 0의 메모리 매핑이 금지되는지 검증한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

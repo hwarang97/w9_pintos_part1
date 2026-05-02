@@ -1,13 +1,4 @@
-/* The main thread acquires a lock.  Then it creates two
-   higher-priority threads that block acquiring the lock, causing
-   them to donate their priorities to the main thread.  When the
-   main thread releases the lock, the other threads should
-   acquire it in priority order.
-
-   Based on a test originally submitted for Stanford's CS 140 in
-   winter 1999 by Matt Franklin <startled@leland.stanford.edu>,
-   Greg Hutchins <gmh@leland.stanford.edu>, Yu Ping Hu
-   <yph@cs.stanford.edu>.  Modified by arens. */
+/* 메인 스레드가 락을 획득한 뒤, 락 획득에서 블록되는 더 높은 우선순위 스레드 두 개를 만든다. 이 스레드들은 메인 스레드에 우선순위를 기부해야 한다. 메인 스레드가 락을 해제하면 다른 스레드들은 우선순위 순서대로 락을 획득해야 한다.\n\n   이 테스트는 Stanford CS 140 겨울 1999 수업에 Matt Franklin, Greg Hutchins, Yu Ping Hu가 제출한 테스트를 바탕으로 하며, arens가 수정했다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -23,10 +14,10 @@ test_priority_donate_one (void)
 {
   struct lock lock;
 
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
-  /* Make sure our priority is the default. */
+  /* 현재 우선순위가 기본값인지 확인한다. */
   ASSERT (thread_get_priority () == PRI_DEFAULT);
 
   lock_init (&lock);

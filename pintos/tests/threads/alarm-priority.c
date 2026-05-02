@@ -1,5 +1,4 @@
-/* Checks that when the alarm clock wakes up threads, the
-   higher-priority threads run first. */
+/* 알람 클록이 스레드들을 깨울 때 우선순위에 맞게 동작하는지 확인한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -18,7 +17,7 @@ test_alarm_priority (void)
 {
   int i;
   
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
   wake_time = timer_ticks () + 5 * TIMER_FREQ;
@@ -41,17 +40,15 @@ test_alarm_priority (void)
 static void
 alarm_priority_thread (void *aux UNUSED) 
 {
-  /* Busy-wait until the current time changes. */
+  /* 현재 시간이 바뀔 때까지 바쁜 대기한다. */
   int64_t start_time = timer_ticks ();
   while (timer_elapsed (start_time) == 0)
     continue;
 
-  /* Now we know we're at the very beginning of a timer tick, so
-     we can call timer_sleep() without worrying about races
-     between checking the time and a timer interrupt. */
+  /* 이제 타이머 틱의 맨 시작 지점임을 알고 있으므로, 여기서부터 시간을 잰다. */
   timer_sleep (wake_time - timer_ticks ());
 
-  /* Print a message on wake-up. */
+  /* 깨어날 때 메시지를 출력한다. */
   msg ("Thread %s woke up.", thread_name ());
 
   sema_up (&wait_sema);

@@ -1,6 +1,4 @@
-/* Spawns several child processes to write out different parts of
-   the contents of a file and waits for them to finish.  Then
-   reads back the file and verifies its contents. */
+/* 파일의 서로 다른 부분을 쓰도록 여러 자식 프로세스를 생성한다. */
 
 #include <random.h>
 #include <stdio.h>

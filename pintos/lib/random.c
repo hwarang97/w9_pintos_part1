@@ -3,24 +3,21 @@
 #include <stdint.h>
 #include "debug.h"
 
-/* RC4-based pseudo-random number generator (PRNG).
+/* RC4 기반 pseudo-random number generator(PRNG).
 
-   RC4 is a stream cipher.  We're not using it here for its
-   cryptographic properties, but because it is easy to implement
-   and its output is plenty random for non-cryptographic
-   purposes.
+   RC4는 stream cipher다. 여기서는 암호학적 성질 때문이 아니라 구현하기 쉽고
+   비암호학적 목적에는 출력이 충분히 random하기 때문에 사용한다.
 
-   See http://en.wikipedia.org/wiki/RC4_(cipher) for information
-   on RC4.*/
+   RC4 정보는 http://en.wikipedia.org/wiki/RC4_(cipher)를 참고한다.*/
 
-/* RC4 state. */
+/* RC4 상태. */
 static uint8_t s[256];          /* S[]. */
 static uint8_t s_i, s_j;        /* i, j. */
 
-/* Already initialized? */
+/* 이미 초기화되었는가? */
 static bool inited;     
 
-/* Swaps the bytes pointed to by A and B. */
+/* A와 B가 가리키는 byte를 맞바꾼다. */
 static inline void
 swap_byte (uint8_t *a, uint8_t *b) {
 	uint8_t t = *a;
@@ -28,7 +25,7 @@ swap_byte (uint8_t *a, uint8_t *b) {
 	*b = t;
 }
 
-/* Initializes or reinitializes the PRNG with the given SEED. */
+/* 주어진 SEED로 PRNG를 초기화하거나 다시 초기화한다. */
 void
 random_init (unsigned seed) {
 	uint8_t *seedp = (uint8_t *) &seed;
@@ -46,7 +43,7 @@ random_init (unsigned seed) {
 	inited = true;
 }
 
-/* Writes SIZE random bytes into BUF. */
+/* SIZE개의 random byte를 BUF에 쓴다. */
 void
 random_bytes (void *buf_, size_t size) {
 	uint8_t *buf;
@@ -66,9 +63,9 @@ random_bytes (void *buf_, size_t size) {
 	}
 }
 
-/* Returns a pseudo-random unsigned long.
-   Use random_ulong() % n to obtain a random number in the range
-   0...n (exclusive). */
+/* pseudo-random unsigned long을 반환한다.
+   0...n 범위의 random number를 얻으려면 random_ulong() % n을 사용한다.
+   n은 포함되지 않는다. */
 unsigned long
 random_ulong (void) {
 	unsigned long ul;

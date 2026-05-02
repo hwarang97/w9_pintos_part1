@@ -1,4 +1,4 @@
-/* Library function for creating a tree of directories. */
+/* 디렉터리 트리를 만드는 라이브러리 함수. */
 
 #include <stdio.h>
 #include <syscall.h>

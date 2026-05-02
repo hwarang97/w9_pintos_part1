@@ -140,7 +140,7 @@ typedef bool list_less_func (const struct list_elem *a,
 /* 정렬된 원소를 가진 리스트에 대한 연산. */
 void list_sort (struct list *,
                 list_less_func *, void *aux);
-void list_insert_ordered (struct list *, struct list_elem *,
+void list_insert_ordered (struct list *, struct list_elem *,//원소들을 비교하면 비교 기준으로 원소의 위치를 배정한다.
                           list_less_func *, void *aux);
 void list_unique (struct list *, struct list *duplicates,
                   list_less_func *, void *aux);

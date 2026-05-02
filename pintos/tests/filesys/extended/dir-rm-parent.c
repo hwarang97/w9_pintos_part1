@@ -1,5 +1,4 @@
-/* Tries to remove a parent of the current directory.  This must
-   fail, because that directory is non-empty. */
+/* 현재 디렉터리의 부모 제거를 시도한다. 이 작업은 실패해야 한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

@@ -1,6 +1,5 @@
-/* This file is derived from source code used in MIT's 6.828
-   course.  The original copyright notice is reproduced in full
-   below. */
+/* 이 파일은 MIT 6.828 과목에서 사용된 소스 코드에서 파생되었다.
+   원본 저작권 고지는 아래에 그대로 재현되어 있다. */
 
 /*
  * Copyright (C) 1997 Massachusetts Institute of Technology 
@@ -50,11 +49,10 @@
 #### memory, and jumps to the first byte of the kernel, where start.S
 #### is linked.
 	
-/* Flags in control register 0. */
-#define CR0_PE 0x00000001      /* Protection Enable. */
+#define CR0_PE 0x00000001      /* protection enable. */
 #define CR0_EM 0x00000004      /* (Floating-point) Emulation. */
-#define CR0_PG 0x80000000      /* Paging. */
-#define CR0_WP 0x00010000      /* Write-Protect enable in kernel mode. */
+#define CR0_PG 0x80000000      /* paging. */
+#define CR0_WP 0x00010000      /* kernel mode에서 write-protect 활성화. */
 
 
 .globl start

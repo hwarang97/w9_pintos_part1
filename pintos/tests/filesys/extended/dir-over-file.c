@@ -1,5 +1,4 @@
-/* Tries to create a file with the same name as an existing
-   directory, which must return failure. */
+/* 이미 존재하는 디렉터리와 같은 이름으로 파일 생성을 시도한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

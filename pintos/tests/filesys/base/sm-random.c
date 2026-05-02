@@ -1,6 +1,4 @@
-/* Writes out the content of a fairly small file in random order,
-   then reads it back in random order to verify that it was
-   written properly. */
+/* 꽤 작은 파일의 내용을 임의 순서로 쓴다. */
 
 #define BLOCK_SIZE 13
 #define TEST_SIZE (13 * 123)

@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 
-/* An offset within a file.
- * This is a separate header because multiple headers want this
- * definition but not any others. */
+/* 파일 안의 오프셋.
+ * 여러 헤더가 이 정의만 필요로 하고 다른 정의는 필요로 하지 않기 때문에
+ * 별도 헤더로 분리되어 있다. */
 typedef int32_t off_t;
 
-/* Format specifier for printf(), e.g.:
+/* printf()용 format specifier 예:
  * printf ("offset=%"PROTd"\n", offset); */
 #define PROTd PRId32
 

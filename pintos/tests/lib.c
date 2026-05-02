@@ -11,11 +11,10 @@ bool quiet = false;
 static void
 vmsg (const char *format, va_list args, const char *suffix) 
 {
-  /* We go to some trouble to stuff the entire message into a
-     single buffer and output it in a single system call, because
-     that'll (typically) ensure that it gets sent to the console
-     atomically.  Otherwise kernel messages like "foo: exit(0)"
-     can end up being interleaved if we're unlucky. */
+  /* 전체 메시지를 하나의 버퍼에 넣고 단일 시스템 콜로 출력하려고 약간
+     수고를 들인다. 보통 이렇게 하면 콘솔로 원자적으로 전달되는 것이
+     보장되기 때문이다. 그렇지 않으면 운이 나쁠 때 "foo: exit(0)" 같은
+     커널 메시지가 중간에 섞여 나올 수 있다. */
   static char buf[1024];
 
   snprintf (buf, sizeof buf, "(%s) ", test_name);
@@ -117,15 +116,14 @@ check_file_handle (int fd,
   size_t ofs = 0;
   size_t file_size;
 
-  /* Warn about file of wrong size.  Don't fail yet because we
-     may still be able to get more information by reading the
-     file. */
+  /* 파일 크기가 틀렸다고 경고한다. 파일을 읽으면 여전히 더 많은 정보를
+     얻을 수 있으므로 아직 실패 처리하지는 않는다. */
   file_size = filesize (fd);
   if (file_size != size)
     msg ("size of %s (%zu) differs from expected (%zu)",
           file_name, file_size, size);
 
-  /* Read the file block-by-block, comparing data as we go. */
+  /* 파일을 블록 단위로 읽으면서 데이터를 비교한다. */
   while (ofs < size)
     {
       char block[512];
@@ -144,7 +142,7 @@ check_file_handle (int fd,
       ofs += block_size;
     }
 
-  /* Now fail due to wrong file size. */
+  /* 이제 잘못된 파일 크기 때문에 실패 처리한다. */
   if (file_size != size)
     fail ("size of %s (%zu) differs from expected (%zu)",
           file_name, file_size, size);

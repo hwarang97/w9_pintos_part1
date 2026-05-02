@@ -1,4 +1,4 @@
-/* Tests the exit system call. */
+/* exit 시스템 콜을 테스트한다. */
 
 #include "tests/lib.h"
 #include "tests/main.h"

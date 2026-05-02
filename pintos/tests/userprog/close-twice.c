@@ -1,4 +1,4 @@
-/* Opens a file and then tries to close it twice.  The second
+/* 파일을 연 뒤 두 번 닫으려고 시도한다. 두 번째
    close must either fail silently or terminate with exit code
    -1. */
 

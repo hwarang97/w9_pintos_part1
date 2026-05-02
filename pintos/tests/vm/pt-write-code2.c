@@ -1,5 +1,4 @@
-/* Try to write to the code segment using a system call.
-   The process must be terminated with -1 exit code. */
+/* 시스템 콜을 사용해 코드 세그먼트에 쓰기를 시도한다. */
 
 #include "tests/lib.h"
 #include "tests/main.h"

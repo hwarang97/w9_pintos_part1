@@ -1,6 +1,6 @@
 /* tar.c
 
-   Creates a tar archive. */
+   tar 아카이브를 만든다. */
 
 #include <syscall.h>
 #include <stdio.h>
@@ -105,7 +105,7 @@ archive_file (char file_name[], size_t file_name_size,
         }
       else
         {
-          /* Nothing to do: don't try to archive the archive file. */
+          /* 할 일이 없다. 아카이브 파일 자체를 아카이브하려 하지 않는다. */
           success = true;
         }
   
@@ -192,16 +192,14 @@ write_header (const char *file_name,
 
   memset (header, 0, sizeof header);
 
-  /* Drop confusing and possibly dangerous prefixes from
-     FILE_NAME. */
+  /* 혼란스럽거나 위험할 수 있는 접두사를 파일 이름에서 제거한다. */
   while (*file_name == '/'
          || !memcmp (file_name, "./", 2)
          || !memcmp (file_name, "../", 3))
     file_name = strchr (file_name, '/') + 1;
   if (*file_name == '\0') 
     {
-      /* Dropped *everything* from FILE_NAME.
-         Should only be possible for a directory. */
+      /* FILE_NAME에서 모든 내용을 제거했다. */
       ASSERT (type_flag == '5');
       return true; 
     }
@@ -211,25 +209,25 @@ write_header (const char *file_name,
       return false;
     }
 
-  /* Fill in header except for final checksum. */
-  strlcpy (header, file_name, 100);                 /* name */
-  snprintf (header + 100, 8, "%07o", mode);         /* mode */
+  /* 최종 체크섬을 제외하고 헤더를 채운다. */
+  strlcpy (header, file_name, 100);                 /* 이름 */
+  snprintf (header + 100, 8, "%07o", mode);         /* 모드 */
   strlcpy (header + 108, "0000000", 8);             /* uid */
   strlcpy (header + 116, "0000000", 8);             /* gid */
-  snprintf (header + 124, 12, "%011o", size);       /* size */
+  snprintf (header + 124, 12, "%011o", size);       /* 크기 */
   snprintf (header + 136, 12, "%011o", 1136102400); /* mtime (2006-01-01) */
-  memset (header + 148, ' ', 8);                    /* chksum */
-  header[156] = type_flag;                          /* typeflag */
-  strlcpy (header + 257, "ustar", 6);               /* magic */
-  strlcpy (header + 263, "00", 3);                  /* version */
+  memset (header + 148, ' ', 8);                    /* 체크섬 */
+  header[156] = type_flag;                          /* 타입 플래그 */
+  strlcpy (header + 257, "ustar", 6);               /* 매직 값 */
+  strlcpy (header + 263, "00", 3);                  /* 버전 */
 
-  /* Compute and fill in final checksum. */
+  /* 최종 체크섬을 계산해 채운다. */
   chksum = 0;
   for (i = 0; i < 512; i++)
     chksum += (uint8_t) header[i];
   snprintf (header + 148, 8, "%07o", chksum);
 
-  /* Write header. */
+  /* 헤더를 쓴다. */
   return do_write (archive_fd, header, 512, write_error);
 }
 

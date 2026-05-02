@@ -1,5 +1,4 @@
-/* Tests that seeking past the end of a file and writing will
-   properly zero out the region in between. */
+/* 파일 끝을 넘어 seek한 뒤 쓰면 파일이 올바르게 커지는지 테스트한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

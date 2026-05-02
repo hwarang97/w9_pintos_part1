@@ -1,6 +1,4 @@
-/* Try writing to fd 0 (stdin), 
-   which may just fail or terminate the process with -1 exit
-   code. */
+/* fd 0(stdin)에 쓰기를 시도한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

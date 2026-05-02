@@ -1,8 +1,4 @@
-/* Child process for syn-read test.
-   Reads the contents of a test file a byte at a time, in the
-   hope that this will take long enough that we can get a
-   significant amount of contention in the kernel file system
-   code. */
+/* syn-read 테스트용 자식 프로세스. */
 
 #include <random.h>
 #include <stdio.h>

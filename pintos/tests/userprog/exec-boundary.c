@@ -1,5 +1,4 @@
-/* Forks a thread whose name spans the boundary between two pages.
-   This is valid, so it must succeed. */
+/* 이름이 두 페이지 경계에 걸쳐 있는 스레드를 fork한다. */
 
 #include <syscall.h>
 #include "tests/userprog/boundary.h"

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "tests/arc4.h"
 
-/* Swap bytes. */
+/* 바이트를 맞바꾼다. */
 static inline void
 swap_byte (uint8_t *a, uint8_t *b)
 {

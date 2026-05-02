@@ -1,6 +1,4 @@
-/* Tries to mmap an invalid offset,
-   which must either fail silently or terminate the process with
-   exit code -1. */
+/* 유효하지 않은 오프셋으로 mmap을 시도한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

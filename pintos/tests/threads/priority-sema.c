@@ -1,5 +1,4 @@
-/* Tests that the highest-priority thread waiting on a semaphore
-   is the first to wake up. */
+/* 세마포어에서 대기 중인 가장 높은 우선순위 스레드가 먼저 깨어나는지 테스트한다. */
 
 #include <stdio.h>
 #include "tests/threads/tests.h"
@@ -17,7 +16,7 @@ test_priority_sema (void)
 {
   int i;
   
-  /* This test does not work with the MLFQS. */
+  /* 이 테스트는 MLFQS에서는 동작하지 않는다. */
   ASSERT (!thread_mlfqs);
 
   sema_init (&sema, 0);

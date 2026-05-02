@@ -1,5 +1,4 @@
-/* Tries to create a file with a name that is much too long,
-   which must fail. */
+/* 지나치게 긴 이름으로 파일 생성을 시도한다. */
 
 #include <string.h>
 #include <syscall.h>

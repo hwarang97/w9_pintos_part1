@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <syscall.h>
 
-/* Aborts the user program, printing the source file name, line
-   number, and function name, plus a user-specific message. */
+/* source file 이름, 줄 번호, 함수 이름, user-specific 메시지를 출력하고
+   user program을 abort한다. */
 void
 debug_panic (const char *file, int line, const char *function,
 		const char *message, ...) {

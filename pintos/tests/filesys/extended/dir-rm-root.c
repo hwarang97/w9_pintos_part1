@@ -1,5 +1,4 @@
-/* Try to remove the root directory.
-   This must fail. */
+/* 루트 디렉터리 제거를 시도한다. */
 
 #include <syscall.h>
 #include "tests/lib.h"

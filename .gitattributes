@@ -1,6 +1,19 @@
+* text=auto
+
+*.c text eol=lf
+*.h text eol=lf
+*.S text eol=lf
+*.s text eol=lf
 *.sh text eol=lf
 *.py text eol=lf
 *.pl text eol=lf
+*.md text eol=lf
+*.ck text eol=lf
+*.inc text eol=lf
+*.mk text eol=lf
+*.vars text eol=lf
+*.tests text eol=lf
+Makefile text eol=lf
 
 pintos/activate text eol=lf
 pintos/utils/pintos text eol=lf
