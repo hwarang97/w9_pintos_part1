@@ -38,29 +38,17 @@ void syscall_init(void)
 }
 
 
-		/*buffer 주소 정합성 검사 필요
-		  가상 주소 물리 주소 변환
-		
-		의사 코드
-		addr_compare(ptr)
-		{
-		if(
-		f->R.rdi == 1
-		&&
-		is_user_vaddr(ptr)
-		&&
-		pml4_get_page(인자값??)
-		)
-		{return ture}
-		else 안맞을 때 
-			return{-1}
-		}
-
-		 if(addr_compare())
-		 {
-		 putbuf()
-		 }
-		*/
+/*
+buffer data 유효성 검사 의사 코드
+addr_compare(ptr)
+{ 
+	//인자값 확인 필요
+	if ( (f->R.rdi == stdout) && (is_user_vaddr(ptr)) && (pml4_get_page()) )
+		return ture
+	else 안맞을 때 
+		return -1;
+}
+*/
 
 /* 메인 시스템 콜 인터페이스 */
 void syscall_handler(struct intr_frame *f UNUSED)
@@ -93,9 +81,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 			// 유효한 주소, 콘솔 출력
 			if (fd == stdout && is_valid_address) {
 
-				// 가상 주소 매핑 mmu.c 파일에서 함수 이용
-				// buffer 가상 주소를 물리 주소로 변환
-				// 테이블을  생성해야할지, 기존걸 사용해야할지 모르겠음
+				// buffer 가상 주소를 물리 주소로 변환 (테이블 사용법 숙지 필요)
 				uint64_t* real_buffer = pml4_get_page(thread_current()->pml4, buffer);
 
 
@@ -103,15 +89,15 @@ void syscall_handler(struct intr_frame *f UNUSED)
 				f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
 			}
 
-			// 그 외
+			// 실패
 			else {
-				f->R.rax = -1; // sentinel value (공통 규칙으로 나온것같음)
+				f->R.rax = -1; // sentinel value (음수 사용 가능여부 확인 필요)
 			}
 
 			break;
 
 		case SYS_EXIT:
-			int status = f->R.rdi (음수가 지원되나?)
+			int status = f->R.rdi (음수 사용 가능여부 확인 필요)
 			f->R.rax = status
 			thread_exit();
 			break;
