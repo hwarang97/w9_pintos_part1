@@ -11,14 +11,14 @@
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
-/* 시스템 콜.
+/* System call.
  *
- * 예전에는 시스템 콜 서비스가 interrupt handler에서 처리되었다.
- * 예를 들어 Linux의 int 0x80이 있다. 하지만 x86-64에서는 제조사가
- * 시스템 콜을 요청하는 효율적인 경로인 `syscall` 명령어를 제공한다.
+ * Previously system call services was handled by the interrupt handler
+ * (e.g. int 0x80 in linux). However, in x86-64, the manufacturer supplies
+ * efficient path for requesting the system call, the `syscall` instruction.
  *
- * syscall 명령어는 Model Specific Register(MSR)의 값을 읽어서 동작한다.
- * 자세한 내용은 매뉴얼을 참고한다. */
+ * The syscall instruction works by reading the values from the the Model
+ * Specific Register (MSR). For the details, see the manual. */
 
 #define MSR_STAR 0xc0000081			/* 세그먼트 selector MSR */
 #define MSR_LSTAR 0xc0000082		/* Long mode SYSCALL 대상 주소 */
@@ -30,9 +30,9 @@ void syscall_init(void)
 							((uint64_t)SEL_KCSEG) << 32);
 	write_msr(MSR_LSTAR, (uint64_t)syscall_entry);
 
-	/* syscall_entry가 유저 영역 스택을 커널 모드 스택으로 바꾸기 전까지는
-	 * interrupt service routine이 어떤 interrupt도 처리하면 안 된다.
-	 * 따라서 FLAG_FL을 마스킹한다. */
+	/* The interrupt service rountine should not serve any interrupts
+	 * until the syscall_entry swaps the userland stack to the kernel
+	 * mode stack. Therefore, we masked the FLAG_FL. */
 	write_msr(MSR_SYSCALL_MASK,
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
@@ -90,6 +90,10 @@ void syscall_handler(struct intr_frame *f UNUSED)
 			f->R.rax = status
 			thread_exit();
 			break;
+      
+		default:
+      //R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
+
 	}
 	*/
 }

@@ -68,7 +68,7 @@ snprintf (char *buffer, size_t buf_size, const char *format, ...) {
    사용자 영역에서 콘솔은 파일 디스크립터 1이다. */
 int
 printf (const char *format, ...) {
-	va_list args;
+	va_list args; //variable Argument : 가변 인자 함수. 인자 개수가 그때그때 달라짐 
 	int retval;
 
 	va_start (args, format);

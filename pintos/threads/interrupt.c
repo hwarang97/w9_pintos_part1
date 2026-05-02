@@ -122,7 +122,7 @@ intr_get_level (void) {
 /* LEVEL이 지정한 대로 interrupt를 활성화하거나 비활성화하고 이전 interrupt
    상태를 반환한다. */
 enum intr_level
-intr_set_level (enum intr_level level) {
+intr_set_level (enum intr_level level) { //이게 뭐시여? 
 	return level == INTR_ON ? intr_enable () : intr_disable ();
 }
 

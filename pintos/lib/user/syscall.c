@@ -118,7 +118,7 @@ read (int fd, void *buffer, unsigned size) {
 }
 
 int
-write (int fd, const void *buffer, unsigned size) {
+write (int fd, const void *buffer, unsigned size) { //여기 write는 User program이 커널에 요청하는 것.
 	return syscall3 (SYS_WRITE, fd, buffer, size);
 }
 
