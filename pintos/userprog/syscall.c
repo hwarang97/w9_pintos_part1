@@ -8,8 +8,8 @@
 #include "threads/flags.h"
 #include "intrinsic.h"
 
-void syscall_entry (void);
-void syscall_handler (struct intr_frame *);
+void syscall_entry(void);
+void syscall_handler(struct intr_frame *);
 
 /* 시스템 콜.
  *
@@ -20,51 +20,76 @@ void syscall_handler (struct intr_frame *);
  * syscall 명령어는 Model Specific Register(MSR)의 값을 읽어서 동작한다.
  * 자세한 내용은 매뉴얼을 참고한다. */
 
-#define MSR_STAR 0xc0000081         /* 세그먼트 selector MSR */
-#define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL 대상 주소 */
+#define MSR_STAR 0xc0000081			/* 세그먼트 selector MSR */
+#define MSR_LSTAR 0xc0000082		/* Long mode SYSCALL 대상 주소 */
 #define MSR_SYSCALL_MASK 0xc0000084 /* eflags용 마스크 */
 
-void
-syscall_init (void) {
-	write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48  |
-			((uint64_t)SEL_KCSEG) << 32);
-	write_msr(MSR_LSTAR, (uint64_t) syscall_entry);
+void syscall_init(void)
+{
+	write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48 |
+							((uint64_t)SEL_KCSEG) << 32);
+	write_msr(MSR_LSTAR, (uint64_t)syscall_entry);
 
 	/* syscall_entry가 유저 영역 스택을 커널 모드 스택으로 바꾸기 전까지는
 	 * interrupt service routine이 어떤 interrupt도 처리하면 안 된다.
 	 * 따라서 FLAG_FL을 마스킹한다. */
 	write_msr(MSR_SYSCALL_MASK,
-			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
+			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
 /* 메인 시스템 콜 인터페이스 */
-void
-syscall_handler (struct intr_frame *f UNUSED) {
-	// TODO: 여기에 구현을 작성한다.
-	printf ("system call!\n");
-	// intr_frame에서 값을 가져오기
-	// rax:시스템콜 번호
-	// rdi:인자개수(argc)fd
-	// rax: 시스템콜 번호
-    // rdi: fd
-    // rsi: buffer 
-    // rdx: size
+void syscall_handler(struct intr_frame *f UNUSED)
+{
+	/*
+	intr_frame에서 값을 가져오기
+	rax: syscall number
+	rdi: 1
+	rsi: 2
+	rdx: 3
+	r10: 4
+	r8:  5
+	r9:  6
+	*/
 
-	// if(f->R.rax==SYS_WRITE){
-	// 	int fd=f->R.rdi;
-	// 	const void *buffer=f->R.rsi;
-	// 	unsigned size=f->R.rdx;
-	// 	}
-	switch(f->R.rax){
+	/*
+	unsigned int SYS_CALL = f->R.rax;
+
+	switch(SYS_CALL){
+
 		case SYS_WRITE:
-		putbuf(f->R.rsi, f->R.rdx);
-		break;
+
+			int fd = f->R.rdi;
+			const void *buffer = f->R.rsi;
+			unsigned size = f->R.rdx;
+
+			// 유효한 버퍼 주소 검사
+			int is_valid_address = is_user_vaddr(buffer);
+
+			// 유효한 주소, 콘솔 출력
+			if (fd == stdout && is_valid_address) {
+
+				// 가상 주소 매핑 mmu.c 파일에서 함수 이용
+				// buffer 가상 주소를 물리 주소로 변환
+				// 테이블을  생성해야할지, 기존걸 사용해야할지 모르겠음
+				uint64_t* real_buffer = pml4_get_page(thread_current()->pml4, buffer);
+
+
+				putbuf(real_buffer, size);
+				f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
+			}
+
+			// 그 외
+			else {
+				f->R.rax = -1; // sentinel value (공통 규칙으로 나온것같음)
+			}
+
+			break;
 
 		case SYS_EXIT:
-		tread_exit();
-		break;
-	
+			int status = f->R.rdi (음수가 지원되나?)
+			f->R.rax = status
+			thread_exit();
+			break;
 	}
-	}
-	thread_exit ();
-
+	*/
+}
