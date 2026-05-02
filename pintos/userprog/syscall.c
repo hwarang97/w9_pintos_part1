@@ -37,6 +37,31 @@ void syscall_init(void)
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
+
+		/*buffer 주소 정합성 검사 필요
+		  가상 주소 물리 주소 변환
+		
+		의사 코드
+		addr_compare(ptr)
+		{
+		if(
+		f->R.rdi == 1
+		&&
+		is_user_vaddr(ptr)
+		&&
+		pml4_get_page(인자값??)
+		)
+		{return ture}
+		else 안맞을 때 
+			return{-1}
+		}
+
+		 if(addr_compare())
+		 {
+		 putbuf()
+		 }
+		*/
+
 /* 메인 시스템 콜 인터페이스 */
 void syscall_handler(struct intr_frame *f UNUSED)
 {
