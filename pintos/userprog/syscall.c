@@ -63,69 +63,73 @@ void syscall_handler(struct intr_frame *f UNUSED)
 	r9:  6
 	*/
 
-	/*
 	unsigned int SYS_CALL = f->R.rax;
 
-	switch(SYS_CALL){
+	switch (SYS_CALL)
+	{
 
-		case SYS_WRITE:
+	case SYS_WRITE:
 
-			// 레지스터 변수
-			int fd = f->R.rdi;
-			const char *buffer = (const char *)f->R.rsi;
-			unsigned size = f->R.rdx;
+		// 레지스터 변수
+		int fd = f->R.rdi;
+		const char *buffer = (const char *)f->R.rsi;
+		unsigned size = f->R.rdx;
 
-			// 조건 변수
-			int is_valid = 1;
+		// 조건 변수
+		int is_valid = 1;
 
-			// size == 0, 아무것도 하지 않아도 된다.
-			if (size == 0) {
-				f->R.rax = size;
+		// size == 0, 아무것도 하지 않아도 된다.
+		if (size == 0)
+		{
+			f->R.rax = size;
+			break;
+		}
+
+		// buffer NULL 체크
+		if (buffer == NULL)
+		{
+			// 현재 스레드를 종료하면 된다
+			thread_exit();
+		}
+
+		// buffer가 사용중인 페이지가 유저영역인지, 매핑되어있는 확인
+		char *start_page = pg_round_down((char *)buffer);
+		char *end_page = pg_round_down((char *)buffer + size - 1);
+		for (char *page = start_page; page <= end_page; page += PGSIZE)
+		{
+			if (!is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL))
+			{
+				is_valid = 0;
 				break;
 			}
+		}
 
-			// buffer NULL 체크
-			if (buffer == NULL) {
-				// 현재 스레드를 종료하면 된다
-				thread_exit();
-			}
+		// 유효한 주소, 콘솔 출력
+		if (fd == STDOUT_FILENO && is_valid)
+		{
+			putbuf(buffer, size);
+			f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
+		}
 
-			// buffer가 사용중인 페이지가 유저영역인지, 매핑되어있는 확인
-			char* start_page = pg_round_down((char *)buffer);
-			char* end_page = pg_round_down((char *)buffer + size - 1);
-			for (char* page = start_page; page <= end_page; page += PGSIZE) {
-				if (!is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL)) {
-					is_valid = 0;
-					break;
-				}
-			}
+		// 실패
+		else
+		{
+			f->R.rax = -1;
+		}
 
-			// 유효한 주소, 콘솔 출력
-			if (fd == STDOUT_FILENO && is_valid) {
-				putbuf(buffer, size);
-				f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
-			}
+		break;
 
-			// 실패
-			else {
-				f->R.rax = -1;
-			}
+	case SYS_EXIT:
+		int exit_status = f->R.rdi;
 
-			break;
+		// 종료 상태 저장
+		thread_current()->exit_status = exit_status;
+		thread_current()->has_exit_status = true;
 
-		case SYS_EXIT:
-			int exit_status = f->R.rdi;
+		// 유저 프로그램에서 시스템콜할때만 사용되는 멤버
+		thread_exit();
 
-			// 종료 상태 저장
-			thread_current()->exit_status = exit_status;
-			thread_current()->has_exit_status = true;
-
-			// 유저 프로그램에서 시스템콜할때만 사용되는 멤버
-			thread_exit();
-
-		default:
-	  //R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
-
+	default:
+		// R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
 	}
-	*/
 }
