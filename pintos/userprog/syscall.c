@@ -114,10 +114,10 @@ void syscall_handler(struct intr_frame *f UNUSED)
 			break;
 
 		case SYS_EXIT:
-			int status = f->R.rdi (음수 사용 가능여부 확인 필요)
-			f->R.rax = status
-			thread_exit();
-			break;
+			int exit_status = f->R.rdi;
+
+			thread_current()->exit_status = status;
+			thread_exit(); // 현재 스레드를 종료시키고, 상태 메세지를 출력
 
 		default:
 	  //R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
