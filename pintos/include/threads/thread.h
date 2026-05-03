@@ -96,9 +96,9 @@ struct thread
 	int recent_cpu;
 #ifdef USERPROG
 	/* userprog/process.c가 소유한다. */
-	uint64_t *pml4 = NULL;		  /* load 함수에서 할당된다 */
-	int exit_status;			  /* 유저 프로그램에서 시스템콜할때만 사용되는 종료 상태 변수 */
-	bool has_exit_status = false; /* exit_status가 제대로 초기화가 되었는지 표시 */
+	uint64_t *pml4;		  /* load 함수에서 할당된다 */
+	int exit_status;	  /* 유저 프로그램에서 시스템콜할때만 사용되는 종료 상태 변수 */
+	bool has_exit_status; /* exit_status가 제대로 초기화가 되었는지 표시 */
 #endif
 #ifdef VM
 	/* 스레드가 소유한 전체 가상 메모리를 위한 테이블. */
