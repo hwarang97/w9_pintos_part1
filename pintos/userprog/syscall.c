@@ -116,8 +116,12 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		case SYS_EXIT:
 			int exit_status = f->R.rdi;
 
-			thread_current()->exit_status = status;
-			thread_exit(); // 현재 스레드를 종료시키고, 상태 메세지를 출력
+			// 종료 상태 저장
+			thread_current()->exit_status = exit_status;
+			thread_current()->has_exit_status = true;
+
+			// 유저 프로그램에서 시스템콜할때만 사용되는 멤버
+			thread_exit();
 
 		default:
 	  //R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
