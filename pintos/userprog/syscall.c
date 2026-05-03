@@ -70,18 +70,38 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
 		case SYS_WRITE:
 
+			// 레지스터 변수
 			int fd = f->R.rdi;
-			const void *buffer = f->R.rsi;
+			const char *buffer = (const char *)f->R.rsi;
 			unsigned size = f->R.rdx;
 
-			// 유저 영역 메모리 주소 확인 (KERN_BASE)
-			int is_valid_address = is_user_vaddr(buffer);
+			// 조건 변수
+			int is_valid = 1;
 
-			// 매핑된 주소인지 확인 (TODO: 페이지 테이블 조건 구체화 필요)
-			is_mapped_address = (pml4_get_page(thread_current()->pml4, buffer) == NULL)
+			// size == 0, 아무것도 하지 않아도 된다.
+			if (size == 0) {
+				f->R.rax = size;
+				break;
+			}
+
+			// buffer NULL 체크
+			if (buffer == NULL) {
+				// 현재 스레드를 종료하면 된다
+				thread_exit();
+			}
+
+			// buffer가 사용중인 페이지가 유저영역인지, 매핑되어있는 확인
+			char* start_page = pg_round_down((char *)buffer);
+			char* end_page = pg_round_down((char *)buffer + size - 1);
+			for (char* page = start_page; page <= end_page; page += PGSIZE) {
+				if (!is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL)) {
+					is_valid = 0;
+					break;
+				}
+			}
 
 			// 유효한 주소, 콘솔 출력
-			if (fd == stdout && is_valid_address && is_mapped_address) {
+			if (fd == STDOUT_FILENO && is_valid) {
 				putbuf(buffer, size);
 				f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
 			}
