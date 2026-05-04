@@ -37,6 +37,7 @@ void syscall_init(void)
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
+<<<<<<< syscall_kms
 bool is_valid_write(struct intr_frame *f)
 {
 if( (f->R.rdi == 1) && (is_user_vaddr((void *)f->R.rsi)) && (f->R.rsi != NULL) )
@@ -47,12 +48,36 @@ else
 
 /* 메인 시스템 콜 인터페이스 */
 void syscall_handler(struct intr_frame *f )
+=======
+
+addr_compare(struct intr_frame *f)
+{ 
+	if ( (f->R.rdi == stdout) && (is_user_vaddr(f))) //buffer 
+	return true;
+	else
+	return -1;
+}
+// int is_vaddr_valid(const char * buffer, unsigned size){
+// 	for(buffer, buffer<=buffer+size-1, buffer += PGSIZE) {
+// 		if (pml4_get_page(thread_current()->pml4, buffer)){
+// 			continue;
+// 		} else {
+// 			return -1;
+// 		}
+		
+// 	}
+// 	return 0;
+// }
+
+/* 메인 시스템 콜 인터페이스 */
+void syscall_handler(struct intr_frame *f)
+>>>>>>> main
 {
 	/*
 	intr_frame에서 값을 가져오기
 	rax: syscall number
-	rdi: 1
-	rsi: 2
+	rdi: 1 fd값
+	rsi: 2 
 	rdx: 3
 	r10: 4
 	r8:  5
@@ -61,6 +86,7 @@ void syscall_handler(struct intr_frame *f )
 
 	unsigned int SYS_CALL = f->R.rax;
 
+<<<<<<< syscall_kms
 	switch(SYS_CALL){
 
 		case SYS_WRITE:
@@ -105,3 +131,71 @@ void syscall_handler(struct intr_frame *f )
 		default:
       //R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
 		}}
+=======
+	switch (SYS_CALL)
+	{
+
+	case SYS_WRITE:
+
+		// 레지스터 변수
+		int fd = f->R.rdi;
+		const char *buffer = (const char *)f->R.rsi;
+		unsigned size = f->R.rdx;
+
+		// 조건 변수
+		int is_valid = 1;
+
+		// size == 0, 아무것도 하지 않아도 된다.
+		if (size == 0)
+		{
+			f->R.rax = size;
+			break;
+		}
+
+		// buffer NULL 체크
+		if (buffer == NULL)
+		{
+			// 현재 스레드를 종료하면 된다
+			thread_exit();
+		}
+
+		// buffer가 사용중인 페이지가 유저영역인지, 매핑되어있는 확인
+		char *start_page = pg_round_down((char *)buffer);
+		char *end_page = pg_round_down((char *)buffer + size - 1);
+		for (char *page = start_page; page <= end_page; page += PGSIZE)
+		{
+			if (!is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL))
+			{
+				is_valid = 0;
+				break;
+			}
+		}
+
+		// 유효한 주소, 콘솔 출력
+		if (fd == STDOUT_FILENO && is_valid)
+		{
+			putbuf(buffer, size);
+			f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
+		}
+
+		// 실패
+		else
+		{
+			f->R.rax = -1;
+		}
+
+		break;
+
+	case SYS_EXIT:
+		int exit_status = f->R.rdi;
+
+		// 종료 상태 저장
+		thread_current()->exit_status = exit_status;
+		thread_exit();
+
+	default:
+      thread_exit();
+		// R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
+	}
+}
+>>>>>>> main

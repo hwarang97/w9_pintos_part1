@@ -1,0 +1,11 @@
+#include <syscall.h>
+
+int
+main (int argc, char *argv[])
+{
+  (void) argc;
+  (void) argv;
+
+  exit (57);
+  return 0;
+}

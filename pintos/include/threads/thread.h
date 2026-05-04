@@ -9,24 +9,24 @@
 #include "vm/vm.h"
 #endif
 
-
 /* 스레드 생명 주기의 상태들. */
-enum thread_status {
-	THREAD_RUNNING,     /* 실행 중인 스레드. */
-	THREAD_READY,       /* 실행 중은 아니지만 실행 준비가 된 상태. */
-	THREAD_BLOCKED,     /* 어떤 이벤트가 발생하기를 기다리는 상태. */
-	THREAD_DYING        /* 곧 파괴될 상태. */
+enum thread_status
+{
+	THREAD_RUNNING, /* 실행 중인 스레드. */
+	THREAD_READY,	/* 실행 중은 아니지만 실행 준비가 된 상태. */
+	THREAD_BLOCKED, /* 어떤 이벤트가 발생하기를 기다리는 상태. */
+	THREAD_DYING	/* 곧 파괴될 상태. */
 };
 
 /* 스레드 식별자 타입.
    원하는 타입으로 다시 정의해도 된다. */
 typedef int tid_t;
-#define TID_ERROR ((tid_t) -1)          /* tid_t의 오류 값. */
+#define TID_ERROR ((tid_t) - 1) /* tid_t의 오류 값. */
 
 /* 스레드 우선순위. */
-#define PRI_MIN 0                       /* 가장 낮은 우선순위. */
-#define PRI_DEFAULT 31                  /* 기본 우선순위. */
-#define PRI_MAX 63                      /* 가장 높은 우선순위. */
+#define PRI_MIN 0	   /* 가장 낮은 우선순위. */
+#define PRI_DEFAULT 31 /* 기본 우선순위. */
+#define PRI_MAX 63	   /* 가장 높은 우선순위. */
 
 /* 커널 스레드 또는 유저 프로세스.
  *
@@ -82,20 +82,22 @@ typedef int tid_t;
  * 이 두 용도로 사용할 수 있는 이유는 두 상황이 동시에 일어나지 않기 때문이다.
  * ready 상태인 스레드만 run queue에 있고, blocked 상태인 스레드만
  * semaphore wait list에 있다. */
-struct thread {
+struct thread
+{
 	/* thread.c가 소유한다. */
-	tid_t tid;                          /* 스레드 식별자. */
-	enum thread_status status;          /* 스레드 상태. */
-	char name[16];                      /* 디버깅용 이름. */
-	int priority;                   /* 우선순위. */
-    int64_t wake_tick; // thread에 깨어날 시간 저장공간 생성
+	tid_t tid;				   /* 스레드 식별자. */
+	enum thread_status status; /* 스레드 상태. */
+	char name[16];			   /* 디버깅용 이름. */
+	int priority;			   /* 우선순위. */
+	int64_t wake_tick;		   // thread에 깨어날 시간 저장공간 생성
 	/* thread.c와 synch.c가 함께 사용한다. */
 	struct list_elem elem, sleep_elem, all_elem; // sleep_list 리스트 연결 정보 저장공간 생성       /* 리스트 원소. */
-    int nice;
+	int nice;
 	int recent_cpu;
 #ifdef USERPROG
 	/* userprog/process.c가 소유한다. */
-	uint64_t *pml4;                     /* page map level 4 */
+	uint64_t *pml4;	 /* load 함수에서 할당된다 */
+	int exit_status; /* 종료 상태 변수 */ 
 #endif
 #ifdef VM
 	/* 스레드가 소유한 전체 가상 메모리를 위한 테이블. */
@@ -103,8 +105,8 @@ struct thread {
 #endif
 
 	/* thread.c가 소유한다. */
-	struct intr_frame tf;               /* 전환에 필요한 정보. */
-	unsigned magic;                     /* 스택 overflow를 감지한다. */
+	struct intr_frame tf; /* 전환에 필요한 정보. */
+	unsigned magic;		  /* 스택 overflow를 감지한다. */
 };
 
 /* false이면 기본값으로 round-robin scheduler를 사용한다.
@@ -112,37 +114,37 @@ struct thread {
    커널 명령줄 옵션 "-o mlfqs"로 제어된다. */
 extern bool thread_mlfqs;
 
-void thread_init (void);
-void thread_start (void);
+void thread_init(void);
+void thread_start(void);
 
-void thread_tick (void);
-void thread_print_stats (void);
+void thread_tick(void);
+void thread_print_stats(void);
 
-typedef void thread_func (void *aux);
-tid_t thread_create (const char *name, int priority, thread_func *, void *);
+typedef void thread_func(void *aux);
+tid_t thread_create(const char *name, int priority, thread_func *, void *);
 
-void thread_block (void);
-void thread_unblock (struct thread *);
+void thread_block(void);
+void thread_unblock(struct thread *);
 
-struct thread *thread_current (void);
-tid_t thread_tid (void);
-const char *thread_name (void);
+struct thread *thread_current(void);
+tid_t thread_tid(void);
+const char *thread_name(void);
 
-void thread_exit (void) NO_RETURN;
-void thread_yield (void);
+void thread_exit(void) NO_RETURN;
+void thread_yield(void);
 
-int thread_get_priority (void);
-void thread_set_priority (int);
+int thread_get_priority(void);
+void thread_set_priority(int);
 
-int thread_get_nice (void);
-void thread_set_nice (int);
-int thread_get_recent_cpu (void);
-int thread_get_load_avg (void);
+int thread_get_nice(void);
+void thread_set_nice(int);
+int thread_get_recent_cpu(void);
+int thread_get_load_avg(void);
 
-void do_iret (struct intr_frame *tf);
+void do_iret(struct intr_frame *tf);
 
 #endif /* threads/thread.h */
 
-bool thread_priority_vs(const struct list_elem *a,  //어디에서든 사용할 수 있게 헤더에 추가 타입 static제거
-                        const struct list_elem *b,
-                        void *aux UNUSED);
+bool thread_priority_vs(const struct list_elem *a, // 어디에서든 사용할 수 있게 헤더에 추가 타입 static제거
+						const struct list_elem *b,
+						void *aux UNUSED);
