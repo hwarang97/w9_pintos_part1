@@ -40,7 +40,7 @@ void syscall_init(void)
 
 addr_compare(struct intr_frame *f)
 { 
-	if ( (f->R.rdi == stdout) && (is_user_vaddr(f)))
+	if ( (f->R.rdi == stdout) && (is_user_vaddr(f))) //buffer 
 	return true;
 	else
 	return -1;
@@ -58,7 +58,7 @@ addr_compare(struct intr_frame *f)
 // }
 
 /* 메인 시스템 콜 인터페이스 */
-void syscall_handler(struct intr_frame *f) //이 UNUSED 부분 의논
+void syscall_handler(struct intr_frame *f)
 {
 	/*
 	intr_frame에서 값을 가져오기
@@ -99,7 +99,7 @@ void syscall_handler(struct intr_frame *f) //이 UNUSED 부분 의논
 
 			char *start_page = pg_round_down((char *)buffer);
 			char *end_page = pg_round_up((char *)buffer + size - 1);
-			for (char *page = *start_page; page <= end_page; page += PGSIZE)
+			for (char *page = *start_page; page < end_page; page += PGSIZE)
 			{
 				if (!is_user_vaddr(page) || (pml4_get_page(thread_current()-> pml4, page) == NULL))
 				{
@@ -110,7 +110,7 @@ void syscall_handler(struct intr_frame *f) //이 UNUSED 부분 의논
 
 			if (fd == stdout && is_valid)
 			{
-				putbuf(buffer, size);
+				putbuf((char *)buffer, size);
 				f->R.rax = size;
 			}
 
@@ -140,7 +140,6 @@ void syscall_handler(struct intr_frame *f) //이 UNUSED 부분 의논
 			
 			thread_current()->exit_status = exit_status;
 			thread_exit();
-			break; //break을 걸 필요가 있나?
 
 		default:
 			thread_exit();
