@@ -73,77 +73,69 @@ void syscall_handler(struct intr_frame *f)
 
 	unsigned int SYS_CALL = f->R.rax;
 
-	//syscall이 들어왔을때, 해당 주소가 현재 프로세스의 PML4 테이블에 올바르게 매핑되어 있는지를 추적
+	switch (SYS_CALL)
+	{
 
-	switch(SYS_CALL){
+	case SYS_WRITE:
 
-		case SYS_WRITE:
+		// 레지스터 변수
+		int fd = f->R.rdi;
+		const char *buffer = (const char *)f->R.rsi;
+		unsigned size = f->R.rdx;
 
-			int fd = f->R.rdi;
-			const void *buffer = f->R.rsi; //출력할 실제 문자열 데이터가 담긴 메모리의 주소
-			unsigned size = f->R.rdx; //출력할 데이터의 총 크기 수
+		// 조건 변수
+		int is_valid = 1;
 
+		// size == 0, 아무것도 하지 않아도 된다.
+		if (size == 0)
+		{
+			f->R.rax = size;
+			break;
+		}
 
-			int is_valid = 1;
-	
+		// buffer NULL 체크
+		if (buffer == NULL)
+		{
+			// 현재 스레드를 종료하면 된다
+			thread_exit();
+		}
 
-			if (size == 0) { //size값 검사. 0일때는 아무 것도 하지 않음
-				f->R.rax = size;
+		// buffer가 사용중인 페이지가 유저영역인지, 매핑되어있는 확인
+		char *start_page = pg_round_down((char *)buffer);
+		char *end_page = pg_round_down((char *)buffer + size - 1);
+		for (char *page = start_page; page <= end_page; page += PGSIZE)
+		{
+			if (!is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL))
+			{
+				is_valid = 0;
 				break;
 			}
+		}
 
-			if (buffer == NULL)
-			{
-				thread_exit();
-			} 
+		// 유효한 주소, 콘솔 출력
+		if (fd == STDOUT_FILENO && is_valid)
+		{
+			putbuf(buffer, size);
+			f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
+		}
 
-			char *start_page = pg_round_down((char *)buffer);
-			char *end_page = pg_round_up((char *)buffer + size - 1);
-			for (char *page = *start_page; page < end_page; page += PGSIZE)
-			{
-				if (!is_user_vaddr(page) || (pml4_get_page(thread_current()-> pml4, page) == NULL))
-				{
-					is_valid = 0;
-					break;
-				}
-			}
+		// 실패
+		else
+		{
+			f->R.rax = -1;
+		}
 
-			if (fd == stdout && is_valid)
-			{
-				putbuf((char *)buffer, size);
-				f->R.rax = size;
-			}
+		break;
 
+	case SYS_EXIT:
+		int exit_status = f->R.rdi;
 
-			// // buffer값 유효성 검사 및 처리
-			// int is_valid_address = is_vaddr_valid(buffer, size);
+		// 종료 상태 저장
+		thread_current()->exit_status = exit_status;
+		thread_exit();
 
-
-			// // 유효한 주소, 콘솔 출력
-			
-			// if (fd == stdout && is_user_vaddr(buffer) && is_valid_address == 0) {
-				
-			// 	putbuf((char *)buffer, size); //
-			// 	f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
-			// }
-
-			// 실패
-			else {
-				f->R.rax = -1; // sentinel value (음수 사용 가능여부 확인 필요)
-			}
-
-			break;
-
-
-		case SYS_EXIT:
-			int exit_status = f->R.rdi; 
-			
-			thread_current()->exit_status = exit_status;
-			thread_exit();
-
-		default:
-			thread_exit();
-      //R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
-
+	default:
+      thread_exit();
+		// R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
 	}
 }

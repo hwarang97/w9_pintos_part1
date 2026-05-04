@@ -6,7 +6,7 @@ tests/threads/%.output: KERNELFLAGS += -threads-tests
 
 
 tests/userprog_TESTS = $(addprefix tests/userprog/,args-none		\
-args-single args-multiple args-many args-dbl-space halt exit create-normal		\
+write-syscall exit-syscall args-single args-multiple args-many args-dbl-space halt exit create-normal		\
 create-empty create-null create-bad-ptr create-long create-exists	\
 create-bound open-normal open-missing open-boundary open-empty		\
 open-null open-bad-ptr open-twice close-normal close-twice close-bad-fd				\
@@ -35,6 +35,7 @@ tests/userprog/bad-write2_SRC = tests/userprog/bad-write2.c tests/main.c
 tests/userprog/bad-jump2_SRC = tests/userprog/bad-jump2.c tests/main.c
 tests/userprog/halt_SRC = tests/userprog/halt.c tests/main.c
 tests/userprog/exit_SRC = tests/userprog/exit.c tests/main.c
+tests/userprog/exit-syscall_SRC = tests/userprog/exit-syscall.c
 tests/userprog/create-normal_SRC = tests/userprog/create-normal.c tests/main.c
 tests/userprog/create-empty_SRC = tests/userprog/create-empty.c tests/main.c
 tests/userprog/create-null_SRC = tests/userprog/create-null.c tests/main.c
@@ -63,6 +64,7 @@ tests/userprog/read-zero_SRC = tests/userprog/read-zero.c tests/main.c
 tests/userprog/read-stdout_SRC = tests/userprog/read-stdout.c tests/main.c
 tests/userprog/read-bad-fd_SRC = tests/userprog/read-bad-fd.c tests/main.c
 tests/userprog/write-normal_SRC = tests/userprog/write-normal.c tests/main.c
+tests/userprog/write-syscall_SRC = tests/userprog/write_syscall.c
 tests/userprog/write-bad-ptr_SRC = tests/userprog/write-bad-ptr.c tests/main.c
 tests/userprog/write-boundary_SRC = tests/userprog/write-boundary.c	\
 tests/userprog/boundary.c tests/main.c
