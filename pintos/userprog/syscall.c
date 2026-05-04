@@ -37,26 +37,34 @@ void syscall_init(void)
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-/*
-buffer data 유효성 검사 의사 코드
-addr_compare(ptr)
-{
-	//인자값 확인 필요
-	if ( (f->R.rdi == stdout) && (is_user_vaddr(ptr)) && (pml4_get_page()) )
-		return true
-	else 안맞을 때
-		return -1;
+
+addr_compare(struct intr_frame *f)
+{ 
+	if ( (f->R.rdi == stdout) && (is_user_vaddr(f))) //buffer 
+	return true;
+	else
+	return -1;
 }
-*/
+// int is_vaddr_valid(const char * buffer, unsigned size){
+// 	for(buffer, buffer<=buffer+size-1, buffer += PGSIZE) {
+// 		if (pml4_get_page(thread_current()->pml4, buffer)){
+// 			continue;
+// 		} else {
+// 			return -1;
+// 		}
+		
+// 	}
+// 	return 0;
+// }
 
 /* 메인 시스템 콜 인터페이스 */
-void syscall_handler(struct intr_frame *f UNUSED)
+void syscall_handler(struct intr_frame *f)
 {
 	/*
 	intr_frame에서 값을 가져오기
 	rax: syscall number
-	rdi: 1
-	rsi: 2
+	rdi: 1 fd값
+	rsi: 2 
 	rdx: 3
 	r10: 4
 	r8:  5
@@ -127,6 +135,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		thread_exit();
 
 	default:
+      thread_exit();
 		// R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
 	}
 }
