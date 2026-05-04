@@ -64,7 +64,7 @@ tests/userprog/read-zero_SRC = tests/userprog/read-zero.c tests/main.c
 tests/userprog/read-stdout_SRC = tests/userprog/read-stdout.c tests/main.c
 tests/userprog/read-bad-fd_SRC = tests/userprog/read-bad-fd.c tests/main.c
 tests/userprog/write-normal_SRC = tests/userprog/write-normal.c tests/main.c
-tests/userprog/write-syscall_SRC = tests/userprog/write_syscall.c
+tests/userprog/write-syscall_SRC = tests/userprog/write-syscall.c
 tests/userprog/write-bad-ptr_SRC = tests/userprog/write-bad-ptr.c tests/main.c
 tests/userprog/write-boundary_SRC = tests/userprog/write-boundary.c	\
 tests/userprog/boundary.c tests/main.c
