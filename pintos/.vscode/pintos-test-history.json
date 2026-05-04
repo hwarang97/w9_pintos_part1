@@ -1,0 +1,14 @@
+{
+  "userprog": {
+    "tests/userprog/write-normal": {
+      "count": 4,
+      "last_used": 1777860689.645,
+      "last_action": "debug"
+    },
+    "tests/userprog/write-bad-ptr": {
+      "count": 2,
+      "last_used": 1777860691.822,
+      "last_action": "debug"
+    }
+  }
+}

@@ -208,11 +208,7 @@ process_wait (tid_t child_tid UNUSED) {
 void
 process_exit (void) {
 	struct thread *curr = thread_current ();
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: 프로세스 종료 메시지를 구현한다.
-	 * TODO: project2/process_termination.html을 참고한다.
-	 * TODO: 여기에서 프로세스 자원 정리를 구현하는 것을 권장한다. */
-
+	printf ("%s: exit(%d)\n", %rsi, %rdx); //수정 필요
 	process_cleanup ();
 }
 
