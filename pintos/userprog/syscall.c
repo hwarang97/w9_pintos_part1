@@ -108,7 +108,7 @@ void syscall_handler(struct intr_frame *f )
 				kernel_addr = pml4_get_page(thread_current() -> pml4, buffer);
 			}
 			if(kernel_addr != NULL){	
-				putbuf(kernel_addr, size);
+				putbuf((char*) buffer, size);
 						f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
 			}
 
