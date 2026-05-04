@@ -211,18 +211,14 @@ int process_wait(tid_t child_tid UNUSED)
 
 /* 프로세스를 종료한다. 이 함수는 thread_exit()에서 호출된다. */
 void process_exit(void)
-{
-	struct thread *curr = thread_current();
-	
+{	
 	// pml4가 할당된 스레드 (유저 스레드)
 	if (curr->pml4)
 	{
-		// 테스트 통과를 위한 출력문 (유저 프로그램에 대해서만 출력하면 돼)
-		printf("%s: exit(%d)\n", curr->name, curr->exit_status);
-		
 		// pml4 테이블을 정리
 		process_cleanup();
 	}
+	
 }
 
 /* 현재 프로세스의 자원을 해제한다. */
