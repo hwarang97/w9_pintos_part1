@@ -37,29 +37,7 @@ void syscall_init(void)
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-	/*
-	intr_frame에서 값을 가져오기
-	rax: syscall number
-	rdi: 1
-	rsi: 2
-	rdx: 3
-	r10: 4
-	r8:  5
-	r9:  6
-	*/
-
-/*
-buffer data 유효성 검사 의사 코드
-addr_compare(ptr)
-{ 
-//인자값 확인 필요
-if ( (f->R.rdi == stdout) && (is_user_vaddr(ptr)) && (pml4_get_page()) )
-	return ture
-else 안맞을 때 
-	return -1;
-}
-*/
-bool addr_compare(struct intr_frame *f)
+bool is_valid_write(struct intr_frame *f)
 {
 if( (f->R.rdi == 1) && (is_user_vaddr((void *)f->R.rsi)) && (f->R.rsi != NULL) )
 	return true;
@@ -88,7 +66,7 @@ void syscall_handler(struct intr_frame *f )
 		case SYS_WRITE:
 			//레지스터 변수
 			int fd = f->R.rdi;
-			const void *buffer = f->R.rsi;
+			const char *buffer = f->R.rsi;
 			unsigned size = f->R.rdx;
 			void *kernel_addr = NULL;
 
@@ -104,7 +82,7 @@ void syscall_handler(struct intr_frame *f )
 			}
 			
 			// 유효성 검사 후 uaddr을 kaddr로 변경
-			if(addr_compare(f)){
+			if(is_valid_write(f)){
 				kernel_addr = pml4_get_page(thread_current() -> pml4, buffer);
 			}
 			if(kernel_addr != NULL){	
@@ -114,12 +92,12 @@ void syscall_handler(struct intr_frame *f )
 
 			// 실패
 			else {
-				f->R.rax = -1; // sentinel value (음수 사용 가능여부 확인 필요)
+				f->R.rax = -1;
 			} // 버퍼 NULL일때는 스레드 종료해야함
 			break;
 
 		case SYS_EXIT:
-			int status = f->R.rdi; //(음수 사용 가능여부 확인 필요)
+			int status = f->R.rdi;
 			printf ("%s: exit(%d)\n", thread_name(), status);
 			thread_exit();
 			break;
