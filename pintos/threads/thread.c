@@ -421,8 +421,8 @@ init_thread(struct thread *t, const char *name, int priority)
 	{												  // 일반 새 thread라면
 		t->nice = thread_current()->nice;			  // 부모 스레드의 nice값을 그대로 가져온다
 		t->recent_cpu = thread_current()->recent_cpu; // 부모 스레드의 recent_cpu값을 그대로 가져온다.
-		t->pml4 = NULL;
-		t->has_exit_status = false;
+		t->pml4 = NULL;                               // 유저 메모리 공간을 가리키는 테이블
+		t->exit_status = -1;                          // 비정상 종료 상태로 -1로 설정
 	}
 }
 

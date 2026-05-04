@@ -124,9 +124,6 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
 		// 종료 상태 저장
 		thread_current()->exit_status = exit_status;
-		thread_current()->has_exit_status = true;
-
-		// 유저 프로그램에서 시스템콜할때만 사용되는 멤버
 		thread_exit();
 
 	default:

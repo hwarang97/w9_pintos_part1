@@ -213,16 +213,13 @@ int process_wait(tid_t child_tid UNUSED)
 void process_exit(void)
 {
 	struct thread *curr = thread_current();
-	// pml4가 할당된 스레드 (유저 스레드)만 정리
+	
+	// pml4가 할당된 스레드 (유저 스레드)
 	if (curr->pml4)
 	{
-		// exit 시스템콜을 호출한 경우
-		if (curr->has_exit_status)
-		{
-			// 테스트를 위한 출력문
-			printf("%s: exit(%d)\n", curr->name, curr->exit_status);
-		}
-
+		// 테스트 통과를 위한 출력문 (유저 프로그램에 대해서만 출력하면 돼)
+		printf("%s: exit(%d)\n", curr->name, curr->exit_status);
+		
 		// pml4 테이블을 정리
 		process_cleanup();
 	}
