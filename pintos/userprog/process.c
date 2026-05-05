@@ -23,34 +23,34 @@
 #endif
 
 static void process_cleanup (void);
-static bool load (const char *file_name, struct intr_frame *if_);
+static bool load (const char *file_name,char *arg_line, struct intr_frame *if_);
 static void initd (void *f_name);
 static void __do_fork (void *);
 
-/* initd와 다른 프로세스에서 공통으로 쓰는 프로세스 초기화 함수. */
+/* 첫 유저 프로세스와 다른 프로세스에서 공통으로 쓰는 프로세스 초기화 함수. */
 static void
 process_init (void) {
 	struct thread *current = thread_current ();
 }
 
-/* FILE_NAME에서 불러온 첫 번째 유저 프로그램인 "initd"를 시작한다.
- * 새 스레드는 process_create_initd()가 반환되기 전에 스케줄될 수 있고,
- * 심지어 종료될 수도 있다. initd의 thread id를 반환하며,
- * 스레드를 만들 수 없으면 TID_ERROR를 반환한다.
+/* 파일 이름에서 불러온 첫 번째 유저 프로그램을 시작한다.
+ * 새 스레드는 이 함수가 반환되기 전에 스케줄될 수 있고,
+ * 심지어 종료될 수도 있다. 새 스레드의 번호를 반환하며,
+ * 스레드를 만들 수 없으면 스레드 오류 값을 반환한다.
  * 이 함수는 반드시 한 번만 호출되어야 한다. */
 tid_t
 process_create_initd (const char *file_name) {
 	char *fn_copy;
 	tid_t tid;
 
-	/* FILE_NAME의 복사본을 만든다.
-	 * 그렇지 않으면 호출자와 load() 사이에 경쟁 상태가 생길 수 있다. */
+	/* 파일 이름의 복사본을 만든다.
+	 * 그렇지 않으면 호출자와 적재 함수 사이에 경쟁 상태가 생길 수 있다. */
 	fn_copy = palloc_get_page (0);
 	if (fn_copy == NULL)
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
 
-	/* FILE_NAME을 실행할 새 스레드를 만든다. */
+	/* 파일 이름을 실행할 새 스레드를 만든다. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
@@ -71,8 +71,8 @@ initd (void *f_name) {
 	NOT_REACHED ();
 }
 
-/* 현재 프로세스를 `name`으로 복제한다. 새 프로세스의 thread id를 반환하며,
- * 스레드를 만들 수 없으면 TID_ERROR를 반환한다. */
+/* 현재 프로세스를 주어진 이름으로 복제한다. 새 프로세스의 스레드 번호를 반환하며,
+ * 스레드를 만들 수 없으면 스레드 오류 값을 반환한다. */
 tid_t
 process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	/* 현재 스레드를 새 스레드로 복제한다. */
@@ -81,8 +81,8 @@ process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 }
 
 #ifndef VM
-/* 이 함수를 pml4_for_each에 넘겨 부모의 주소 공간을 복제한다.
- * 이 코드는 project 2에서만 사용된다. */
+/* 이 함수를 페이지 테이블 순회 함수에 넘겨 부모의 주소 공간을 복제한다.
+ * 이 코드는 프로젝트 2에서만 사용된다. */
 static bool
 duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	struct thread *current = thread_current ();
@@ -91,40 +91,40 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	void *newpage;
 	bool writable;
 
-	/* 1. TODO: parent_page가 커널 페이지라면 즉시 반환한다. */
+	/* 1. 할 일: 부모 페이지가 커널 페이지라면 즉시 반환한다. */
 
-	/* 2. 부모의 page map level 4에서 VA를 해석한다. */
+	/* 2. 부모의 페이지 맵 레벨 4에서 가상 주소를 해석한다. */
 	parent_page = pml4_get_page (parent->pml4, va);
 
-	/* 3. TODO: 자식을 위한 새 PAL_USER 페이지를 할당하고 결과를
-	 *    TODO: NEWPAGE에 저장한다. */
+	/* 3. 할 일: 자식을 위한 새 유저 페이지를 할당하고 결과를
+	 *    새 페이지에 저장한다. */
 
-	/* 4. TODO: 부모의 페이지를 새 페이지로 복사하고,
-	 *    TODO: 부모 페이지가 쓰기 가능한지 확인한다. 결과에 따라
-	 *    TODO: WRITABLE 값을 설정한다. */
+	/* 4. 할 일: 부모의 페이지를 새 페이지로 복사하고,
+	 *    부모 페이지가 쓰기 가능한지 확인한다. 결과에 따라
+	 *    쓰기 가능 값을 설정한다. */
 
-	/* 5. VA 주소에 있는 자식의 페이지 테이블에 새 페이지를 WRITABLE
+	/* 5. 가상 주소에 있는 자식의 페이지 테이블에 새 페이지를 쓰기 가능
 	 *    권한으로 추가한다. */
 	if (!pml4_set_page (current->pml4, va, newpage, writable)) {
-		/* 6. TODO: 페이지 삽입에 실패하면 오류 처리를 한다. */
+		/* 6. 할 일: 페이지 삽입에 실패하면 오류 처리를 한다. */
 	}
 	return true;
 }
 #endif
 
 /* 부모의 실행 문맥을 복사하는 스레드 함수.
- * 힌트) parent->tf는 프로세스의 유저 영역 문맥을 가지고 있지 않다.
- *       따라서 process_fork의 두 번째 인자를 이 함수로 넘겨야 한다. */
+ * 힌트) 부모의 트랩 프레임은 프로세스의 유저 영역 문맥을 가지고 있지 않다.
+ *       따라서 프로세스 복제 함수의 두 번째 인자를 이 함수로 넘겨야 한다. */
 static void
 __do_fork (void *aux) {
 	struct intr_frame if_;
 	struct thread *parent = (struct thread *) aux;
 	struct thread *current = thread_current ();
-	/* TODO: parent_if를 어떻게든 전달한다. 즉 process_fork()의 if_이다. */
+	/* 할 일: 부모 인터럽트 프레임을 어떻게든 전달한다. 즉 복제 호출의 인터럽트 프레임이다. */
 	struct intr_frame *parent_if;
 	bool succ = true;
 
-	/* 1. CPU 문맥을 로컬 스택으로 읽어온다. */
+	/* 1. 중앙 처리 장치 문맥을 지역 스택으로 읽어온다. */
 	memcpy (&if_, parent_if, sizeof (struct intr_frame));
 
 	/* 2. 페이지 테이블을 복제한다. */
@@ -142,10 +142,10 @@ __do_fork (void *aux) {
 		goto error;
 #endif
 
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: 힌트) file 객체를 복제하려면 include/filesys/file.h의
-	 * TODO:       `file_duplicate`를 사용한다. 이 함수가 부모의 자원을
-	 * TODO:       성공적으로 복제하기 전까지 부모는 fork()에서 반환되면 안 된다. */
+	/* 할 일: 여기에 코드를 작성한다.
+	 * 힌트) 파일 객체를 복제하려면 파일 관련 헤더의 파일 복제 함수를 사용한다.
+	 * 이 함수가 부모의 자원을 성공적으로 복제하기 전까지
+	 * 부모는 복제 호출에서 반환되면 안 된다. */
 
 	process_init ();
 
@@ -156,14 +156,25 @@ error:
 	thread_exit ();
 }
 
-/* 현재 실행 문맥을 f_name으로 전환한다.
+/* 현재 실행 문맥을 파일 이름으로 전환한다.
  * 실패하면 -1을 반환한다. */
 int
 process_exec (void *f_name) {
 	char *file_name = f_name;
+	char *arg_copy = palloc_get_page(0); //문자열을 복사할 메모리 할당
+
+	if(arg_copy == NULL){   //해당 메모리가 NULL이라면 기존에 전달받은 file_name을 해제
+		palloc_free_page(file_name);
+		return -1;  //실패 반환
+	}
+
+	strlcpy(arg_copy, file_name, PGSIZE);  //문자열을 arg_copy에 복사한다
+	
+	char *save_ptr; //어디까지 잘랐는지 기억하는 포인터 변수
+	char *exec_name = strtok_r(file_name, " ", &save_ptr); //strtok_r로 공백 기준으로 문자열을 잘라 첫 번째 단어만 반환
 	bool success;
 
-	/* thread 구조체 안의 intr_frame은 사용할 수 없다.
+	/* 스레드 구조체 안의 인터럽트 프레임은 사용할 수 없다.
 	 * 현재 스레드가 다시 스케줄될 때 실행 정보가 그 멤버에 저장되기 때문이다. */
 	struct intr_frame _if;
 	_if.ds = _if.es = _if.ss = SEL_UDSEG;
@@ -174,9 +185,11 @@ process_exec (void *f_name) {
 	process_cleanup ();
 
 	/* 그 다음 바이너리를 불러온다. */
-	success = load (file_name, &_if);
+	success = load (exec_name, arg_copy, &_if);
 
-	/* load에 실패하면 종료한다. */
+
+	/* 적재에 실패하면 종료한다. */
+	palloc_free_page(arg_copy);
 	palloc_free_page (file_name);
 	if (!success)
 		return -1;
@@ -187,31 +200,32 @@ process_exec (void *f_name) {
 }
 
 
-/* thread TID가 종료될 때까지 기다리고 종료 상태를 반환한다.
+/* 스레드 번호가 종료될 때까지 기다리고 종료 상태를 반환한다.
  * 커널에 의해 종료된 경우, 즉 예외 때문에 죽은 경우 -1을 반환한다.
- * TID가 유효하지 않거나 호출한 프로세스의 자식이 아니거나,
- * 해당 TID에 대해 process_wait()가 이미 성공적으로 호출된 적이 있으면
+ * 스레드 번호가 유효하지 않거나 호출한 프로세스의 자식이 아니거나,
+ * 해당 스레드 번호에 대해 대기 함수가 이미 성공적으로 호출된 적이 있으면
  * 기다리지 않고 즉시 -1을 반환한다.
  *
- * 이 함수는 problem 2-2에서 구현된다. 현재는 아무 일도 하지 않는다. */
+ * 이 함수는 문제 2-2에서 구현된다. 현재는 아무 일도 하지 않는다. */
 int
 process_wait (tid_t child_tid UNUSED) {
-	/* XXX: 힌트) process_wait(initd)에서 PintOS가 종료된다.
-	 * XXX:       process_wait을 구현하기 전에는 여기에 무한 루프를
-	 * XXX:       추가하는 것을 권장한다. */
+	/* 주의: 첫 유저 프로세스를 기다리는 지점에서 핀토스가 종료된다.
+	 * 대기 함수를 구현하기 전에는 여기에 무한 루프를
+	 * 추가하는 것을 권장한다. */
 	while(1){
 	}
 	return -1;
 }
 
-/* 프로세스를 종료한다. 이 함수는 thread_exit()에서 호출된다. */
+/* 프로세스를 종료한다. 이 함수는 스레드 종료 함수에서 호출된다. */
 void
 process_exit (void) {
 	struct thread *curr = thread_current ();
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: 프로세스 종료 메시지를 구현한다.
-	 * TODO: project2/process_termination.html을 참고한다.
-	 * TODO: 여기에서 프로세스 자원 정리를 구현하는 것을 권장한다. */
+	/* 할 일: 여기에 코드를 작성한다.
+	 * 프로세스 종료 메시지를 구현한다.
+	 * 프로젝트 2의 프로세스 종료 설명 문서를 참고한다.
+	 * 여기에서 프로세스 자원 정리를 구현하는 것을 권장한다. */
+	
 
 	process_cleanup ();
 }
@@ -231,7 +245,7 @@ process_cleanup (void) {
 	pml4 = curr->pml4;
 	if (pml4 != NULL) {
 		/* 여기서는 순서가 매우 중요하다. 페이지 디렉터리를 전환하기 전에
-		 * cur->pagedir를 NULL로 설정해야 한다. 그래야 timer interrupt가
+		 * 현재 스레드의 페이지 디렉터리 포인터를 비워야 한다. 그래야 타이머 인터럽트가
 		 * 프로세스 페이지 디렉터리로 다시 전환하지 못한다.
 		 * 프로세스의 페이지 디렉터리를 파괴하기 전에 기본 페이지 디렉터리를
 		 * 활성화해야 한다. 그렇지 않으면 현재 활성 페이지 디렉터리가
@@ -242,21 +256,21 @@ process_cleanup (void) {
 	}
 }
 
-/* 다음 스레드에서 유저 코드를 실행할 수 있도록 CPU를 설정한다.
- * 이 함수는 모든 context switch 때 호출된다. */
+/* 다음 스레드에서 유저 코드를 실행할 수 있도록 중앙 처리 장치를 설정한다.
+ * 이 함수는 모든 문맥 전환 때 호출된다. */
 void
 process_activate (struct thread *next) {
 	/* 스레드의 페이지 테이블을 활성화한다. */
 	pml4_activate (next->pml4);
 
-	/* interrupt 처리에 사용할 스레드의 커널 스택을 설정한다. */
+	/* 인터럽트 처리에 사용할 스레드의 커널 스택을 설정한다. */
 	tss_update (next);
 }
 
-/* ELF 바이너리를 불러온다. 아래 정의들은 ELF 명세 [ELF1]에서
+/* 실행 파일 바이너리를 불러온다. 아래 정의들은 실행 파일 형식 명세에서
  * 거의 그대로 가져온 것이다. */
 
-/* ELF 타입. [ELF1] 1-2를 참고한다. */
+/* 실행 파일 형식 종류. */
 #define EI_NIDENT 16
 
 #define PT_NULL    0            /* 무시한다. */
@@ -272,8 +286,8 @@ process_activate (struct thread *next) {
 #define PF_W 2          /* 쓰기 가능. */
 #define PF_R 4          /* 읽기 가능. */
 
-/* 실행 파일 헤더. [ELF1] 1-4부터 1-8까지를 참고한다.
- * ELF 바이너리의 맨 앞에 위치한다. */
+/* 실행 파일 헤더. 실행 파일 형식 명세를 참고한다.
+ * 실행 파일 바이너리의 맨 앞에 위치한다. */
 struct ELF64_hdr {
 	unsigned char e_ident[EI_NIDENT];
 	uint16_t e_type;
@@ -312,12 +326,12 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes,
 		bool writable);
 
-/* FILE_NAME의 ELF 실행 파일을 현재 스레드에 불러온다.
- * 실행 파일의 시작 지점을 *RIP에 저장하고,
- * 초기 스택 포인터를 *RSP에 저장한다.
- * 성공하면 true, 실패하면 false를 반환한다. */
+/* 파일 이름의 실행 파일을 현재 스레드에 불러온다.
+ * 실행 파일의 시작 지점을 명령어 포인터에 저장하고,
+ * 초기 스택 포인터를 스택 포인터에 저장한다.
+ * 성공하면 참, 실패하면 거짓을 반환한다. */
 static bool
-load (const char *file_name, struct intr_frame *if_) {
+load (const char *file_name,char *arg_line, struct intr_frame *if_) {  //*arg_line 인자 받아오기
 	struct thread *t = thread_current ();
 	struct ELF ehdr;
 	struct file *file = NULL;
@@ -342,7 +356,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
 			|| memcmp (ehdr.e_ident, "\177ELF\2\1\1", 7)
 			|| ehdr.e_type != 2
-			|| ehdr.e_machine != 0x3E // amd64
+			|| ehdr.e_machine != 0x3E // 64비트 아키텍처
 			|| ehdr.e_version != 1
 			|| ehdr.e_phentsize != sizeof (struct Phdr)
 			|| ehdr.e_phnum > 1024) {
@@ -409,33 +423,72 @@ load (const char *file_name, struct intr_frame *if_) {
 
 	/* 시작 주소. */
 	if_->rip = ehdr.e_entry;
+    
+	char *argv[64]; //인자 최대 64개
+	int argc = 0;  //문자열을 개수
+	char *save_ptr; // 어디까지 나눴는지 기록
+	char *token = strtok_r(arg_line, " ", &save_ptr); //strtok_r 인자 나누기
+	while(token != NULL){  
+		argv[argc] = token; //argv에 토큰값 넣어주기
+		argc++; //인자 하나 추가
 
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: argument passing을 구현한다.
-	 * TODO: project2/argument_passing.html을 참고한다. */
+		token=strtok_r(NULL, " ", &save_ptr); //두 번째 호출부터는 첫 번째 인자로 NULL을 넘긴다
+	}
 
+	int j = argc - 1; //  j를 문자열 역순으로 넣을 수 있게 선언
+	while(j>=0){
+		size_t arg_len=strlen(argv[j])+1; //문자열 길이를 저장할 변수 타입은 strlen과 동일하게 size_t로 선언
+		if_->rsp -= arg_len; //스택 포인터에서 문자열 길이만큼 빼고 다시 그 값을 스택 포인터에 넣는다.
+		char *u_stack = (char *)if_->rsp; //스택에 빈주소 공간 연결
+        char *arg_org = argv[j];  //argv[j]의 원래 주소 연결
+
+        for (size_t k = 0; k < arg_len; k++) {  //문자열 하나씩 복사
+            u_stack[k] = arg_org[k];
+		} 
+		argv[j] = (char *)if_->rsp; //argv[j]의 주소를 rsp의 내린 주소로 변경한다.
+		j -= 1;
+	}
+	argv[argc] = NULL; //마지막 인자 NULL 대입
+    if_->rsp -= if_->rsp % 8; //바이트 정렬
+
+	int arg_idx = argc; //주소값 변수
+	while(arg_idx >= 0){
+		if_->rsp -= sizeof(char *);  //주소 공간만큼 rsp내리기
+		*(char **)if_->rsp = argv[arg_idx]; //문자열의 시작 주소를 저장
+		arg_idx -= 1; //arg_idx값 하나 감소
+	}
+
+
+	//rdi-> 함수의 첫 번째 인자를 담는 자리
+	//rsi-> 함수의 두 번째 인자를 담는 자리
+	char **argv_start = (char **)if_->rsp; // argv[0]이 저장된 위치 argv 배열의 시작 주소
+	if_->rsp -= sizeof(char *); //
+	*(char **)if_->rsp = NULL; //fake return address주소 NULL로 설정
+	if_->R.rdi = argc; // main에 첫 번째 인자가 argc이기 때문에 argc전달
+	if_->R.rsi = (uint64_t)argv_start; //main에 두 번째 인자 argv 전달
+	
 	success = true;
 
 done:
-	/* load 성공 여부와 관계없이 여기로 도달한다. */
+	/* 적재 성공 여부와 관계없이 여기로 도달한다. */
 	file_close (file);
 	return success;
 }
 
 
-/* PHDR이 FILE 안의 유효하고 적재 가능한 세그먼트를 설명하는지 확인한다.
- * 그렇다면 true, 아니면 false를 반환한다. */
+/* 프로그램 헤더가 파일 안의 유효하고 적재 가능한 세그먼트를 설명하는지 확인한다.
+ * 그렇다면 참, 아니면 거짓을 반환한다. */
 static bool
 validate_segment (const struct Phdr *phdr, struct file *file) {
-	/* p_offset과 p_vaddr은 같은 page offset을 가져야 한다. */
+	/* 파일 위치와 가상 주소는 같은 페이지 오프셋을 가져야 한다. */
 	if ((phdr->p_offset & PGMASK) != (phdr->p_vaddr & PGMASK))
 		return false;
 
-	/* p_offset은 FILE 내부를 가리켜야 한다. */
+	/* 파일 위치는 파일 내부를 가리켜야 한다. */
 	if (phdr->p_offset > (uint64_t) file_length (file))
 		return false;
 
-	/* p_memsz는 p_filesz 이상이어야 한다. */
+	/* 메모리 크기는 파일 크기 이상이어야 한다. */
 	if (phdr->p_memsz < phdr->p_filesz)
 		return false;
 
@@ -453,10 +506,10 @@ validate_segment (const struct Phdr *phdr, struct file *file) {
 	if (phdr->p_vaddr + phdr->p_memsz < phdr->p_vaddr)
 		return false;
 
-	/* page 0 매핑을 금지한다.
-	   page 0을 매핑하는 것 자체가 좋지 않을 뿐 아니라,
-	   이를 허용하면 유저 코드가 시스템 콜에 null pointer를 넘겼을 때
-	   memcpy() 등의 null pointer assertion으로 커널 panic이 발생할 가능성이 크다. */
+	/* 0번 페이지 매핑을 금지한다.
+	   0번 페이지를 매핑하는 것 자체가 좋지 않을 뿐 아니라,
+	   이를 허용하면 유저 코드가 시스템 콜에 널 포인터를 넘겼을 때
+	   메모리 복사 함수 등의 널 포인터 검사로 커널 패닉이 발생할 가능성이 크다. */
 	if (phdr->p_vaddr < PGSIZE)
 		return false;
 
@@ -465,24 +518,24 @@ validate_segment (const struct Phdr *phdr, struct file *file) {
 }
 
 #ifndef VM
-/* 이 블록의 코드는 project 2 동안에만 사용된다.
- * project 2 전체에서 사용할 함수를 구현하려면 #ifndef 매크로 밖에 구현한다. */
+/* 이 블록의 코드는 프로젝트 2 동안에만 사용된다.
+ * 프로젝트 2 전체에서 사용할 함수를 구현하려면 조건부 컴파일 매크로 밖에 구현한다. */
 
-/* load() 보조 함수들. */
+/* 적재 보조 함수들. */
 static bool install_page (void *upage, void *kpage, bool writable);
 
-/* FILE의 offset OFS에서 시작하는 세그먼트를 주소 UPAGE에 불러온다.
- * 총 READ_BYTES + ZERO_BYTES 바이트의 가상 메모리를 다음과 같이 초기화한다.
+/* 파일의 오프셋에서 시작하는 세그먼트를 유저 페이지 주소에 불러온다.
+ * 총 읽기 바이트 수 + 0 채움 바이트 수만큼의 가상 메모리를 다음과 같이 초기화한다.
  *
- * - UPAGE부터 READ_BYTES 바이트는 FILE의 offset OFS부터 읽어야 한다.
+ * - 유저 페이지 주소부터 읽기 바이트 수만큼은 파일의 오프셋부터 읽어야 한다.
  *
- * - UPAGE + READ_BYTES부터 ZERO_BYTES 바이트는 0으로 채워야 한다.
+ * - 유저 페이지 주소 + 읽기 바이트 수부터 0 채움 바이트 수만큼은 0으로 채워야 한다.
  *
- * 이 함수가 초기화한 페이지들은 WRITABLE이 true이면 유저 프로세스가 쓸 수 있고,
+ * 이 함수가 초기화한 페이지들은 쓰기 가능 값이 참이면 유저 프로세스가 쓸 수 있고,
  * 그렇지 않으면 읽기 전용이어야 한다.
  *
- * 성공하면 true를 반환하고, 메모리 할당 오류나 디스크 읽기 오류가 발생하면
- * false를 반환한다. */
+ * 성공하면 참을 반환하고, 메모리 할당 오류나 디스크 읽기 오류가 발생하면
+ * 거짓을 반환한다. */
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
@@ -493,8 +546,8 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	file_seek (file, ofs);
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* 이 페이지를 어떻게 채울지 계산한다.
-		 * FILE에서 PAGE_READ_BYTES 바이트를 읽고,
-		 * 마지막 PAGE_ZERO_BYTES 바이트는 0으로 채운다. */
+		 * 파일에서 페이지 읽기 바이트 수만큼 읽고,
+		 * 마지막 페이지 0 채움 바이트 수만큼은 0으로 채운다. */
 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
@@ -525,7 +578,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	return true;
 }
 
-/* USER_STACK에 0으로 채운 페이지를 매핑해서 최소 스택을 만든다. */
+/* 유저 스택에 0으로 채운 페이지를 매핑해서 최소 스택을 만든다. */
 static bool
 setup_stack (struct intr_frame *if_) {
 	uint8_t *kpage;
@@ -542,14 +595,13 @@ setup_stack (struct intr_frame *if_) {
 	return success;
 }
 
-/* 유저 가상 주소 UPAGE에서 커널 가상 주소 KPAGE로 가는 매핑을
- * 페이지 테이블에 추가한다.
- * WRITABLE이 true이면 유저 프로세스가 페이지를 수정할 수 있고,
+/* 유저 가상 주소에서 커널 가상 주소로 가는 매핑을 페이지 테이블에 추가한다.
+ * 쓰기 가능 값이 참이면 유저 프로세스가 페이지를 수정할 수 있고,
  * 그렇지 않으면 읽기 전용이다.
- * UPAGE는 이미 매핑되어 있으면 안 된다.
- * KPAGE는 보통 palloc_get_page()로 유저 풀에서 얻은 페이지여야 한다.
- * 성공하면 true를 반환하고, UPAGE가 이미 매핑되어 있거나 메모리 할당에
- * 실패하면 false를 반환한다. */
+ * 유저 가상 주소는 이미 매핑되어 있으면 안 된다.
+ * 커널 가상 주소는 보통 페이지 할당 함수로 유저 풀에서 얻은 페이지여야 한다.
+ * 성공하면 참을 반환하고, 유저 가상 주소가 이미 매핑되어 있거나 메모리 할당에
+ * 실패하면 거짓을 반환한다. */
 static bool
 install_page (void *upage, void *kpage, bool writable) {
 	struct thread *t = thread_current ();
@@ -560,28 +612,28 @@ install_page (void *upage, void *kpage, bool writable) {
 			&& pml4_set_page (t->pml4, upage, kpage, writable));
 }
 #else
-/* 여기부터의 코드는 project 3 이후에 사용된다.
- * project 2에서만 사용할 함수를 구현하려면 위쪽 블록에 구현한다. */
+/* 여기부터의 코드는 프로젝트 3 이후에 사용된다.
+ * 프로젝트 2에서만 사용할 함수를 구현하려면 위쪽 블록에 구현한다. */
 
 static bool
 lazy_load_segment (struct page *page, void *aux) {
-	/* TODO: 파일에서 세그먼트를 불러온다. */
-	/* TODO: VA 주소에서 첫 page fault가 발생했을 때 호출된다. */
-	/* TODO: 이 함수를 호출할 때 VA를 사용할 수 있다. */
+	/* 할 일: 파일에서 세그먼트를 불러온다. */
+	/* 할 일: 가상 주소에서 첫 페이지 폴트가 발생했을 때 호출된다. */
+	/* 할 일: 이 함수를 호출할 때 가상 주소를 사용할 수 있다. */
 }
 
-/* FILE의 offset OFS에서 시작하는 세그먼트를 주소 UPAGE에 불러온다.
- * 총 READ_BYTES + ZERO_BYTES 바이트의 가상 메모리를 다음과 같이 초기화한다.
+/* 파일의 오프셋에서 시작하는 세그먼트를 유저 페이지 주소에 불러온다.
+ * 총 읽기 바이트 수 + 0 채움 바이트 수만큼의 가상 메모리를 다음과 같이 초기화한다.
  *
- * - UPAGE부터 READ_BYTES 바이트는 FILE의 offset OFS부터 읽어야 한다.
+ * - 유저 페이지 주소부터 읽기 바이트 수만큼은 파일의 오프셋부터 읽어야 한다.
  *
- * - UPAGE + READ_BYTES부터 ZERO_BYTES 바이트는 0으로 채워야 한다.
+ * - 유저 페이지 주소 + 읽기 바이트 수부터 0 채움 바이트 수만큼은 0으로 채워야 한다.
  *
- * 이 함수가 초기화한 페이지들은 WRITABLE이 true이면 유저 프로세스가 쓸 수 있고,
+ * 이 함수가 초기화한 페이지들은 쓰기 가능 값이 참이면 유저 프로세스가 쓸 수 있고,
  * 그렇지 않으면 읽기 전용이어야 한다.
  *
- * 성공하면 true를 반환하고, 메모리 할당 오류나 디스크 읽기 오류가 발생하면
- * false를 반환한다. */
+ * 성공하면 참을 반환하고, 메모리 할당 오류나 디스크 읽기 오류가 발생하면
+ * 거짓을 반환한다. */
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
@@ -591,12 +643,12 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* 이 페이지를 어떻게 채울지 계산한다.
-		 * FILE에서 PAGE_READ_BYTES 바이트를 읽고,
-		 * 마지막 PAGE_ZERO_BYTES 바이트는 0으로 채운다. */
+		 * 파일에서 페이지 읽기 바이트 수만큼 읽고,
+		 * 마지막 페이지 0 채움 바이트 수만큼은 0으로 채운다. */
 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-		/* TODO: lazy_load_segment에 정보를 넘기기 위한 aux를 설정한다. */
+		/* 할 일: 지연 세그먼트 적재 함수에 정보를 넘기기 위한 보조 값을 설정한다. */
 		void *aux = NULL;
 		if (!vm_alloc_page_with_initializer (VM_ANON, upage,
 					writable, lazy_load_segment, aux))
@@ -610,17 +662,17 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	return true;
 }
 
-/* USER_STACK에 스택용 PAGE를 만든다. 성공하면 true를 반환한다. */
+/* 유저 스택에 스택용 페이지를 만든다. 성공하면 참을 반환한다. */
 static bool
 setup_stack (struct intr_frame *if_) {
 	bool success = false;
 	void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
 
-	/* TODO: stack_bottom에 스택을 매핑하고 즉시 페이지를 claim한다.
-	 * TODO: 성공하면 그에 맞게 rsp를 설정한다.
-	 * TODO: 해당 페이지를 stack으로 표시해야 한다. */
-	/* TODO: 여기에 코드를 작성한다. */
+	/* 할 일: 스택 바닥 주소에 스택을 매핑하고 즉시 페이지를 확보한다.
+	 * 성공하면 그에 맞게 스택 포인터를 설정한다.
+	 * 해당 페이지를 스택으로 표시해야 한다. */
+	/* 할 일: 여기에 코드를 작성한다. */
 
 	return success;
 }
-#endif /* VM */
+#endif /* 가상 메모리 */
