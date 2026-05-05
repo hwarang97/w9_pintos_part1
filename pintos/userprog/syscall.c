@@ -127,6 +127,6 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		thread_exit();
 
 	default:
-		// R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
+		thread_exit(); // R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
 	}
 }
