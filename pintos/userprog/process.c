@@ -166,7 +166,22 @@ error:
 int process_exec(void *f_name)
 {
 	char *file_name = f_name;
+	char *savepoint;
+	int argc = 0;
+	char *argv[100];
 	bool success;
+	// 문자열 나누기
+	char *token = strtok_r(file_name, " ", &savepoint);
+
+	// 유저 문자열 복사
+	while(token != NULL){
+		argv[argc] = token;
+		argc++;
+
+		token = strtok_r(NULL, " ", &savepoint);
+	}
+	argv[argc] = NULL;
+	
 
 	/* thread 구조체 안의 intr_frame은 사용할 수 없다.
 	 * 현재 스레드가 다시 스케줄될 때 실행 정보가 그 멤버에 저장되기 때문이다. */
@@ -427,6 +442,8 @@ load(const char *file_name, struct intr_frame *if_)
 	/* TODO: 여기에 코드를 작성한다.
 	 * TODO: argument passing을 구현한다.
 	 * TODO: project2/argument_passing.html을 참고한다. */
+
+
 
 	success = true;
 
