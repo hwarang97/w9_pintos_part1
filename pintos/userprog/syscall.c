@@ -10,6 +10,7 @@
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
+static bool is_valid_write(char *page);
 
 /* System call.
  *
@@ -37,9 +38,9 @@ void syscall_init(void)
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-bool is_valid_write(int fd ,const char * buffer)
+static bool is_valid_write(char *page)
 {
-if((fd == 1) && (is_user_vaddr(buffer)))
+if(is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL))
 	return true;
 else
 	return false;
@@ -93,7 +94,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		char *end_page = pg_round_down((char *)buffer + size - 1);
 		for (char *page = start_page; page <= end_page; page += PGSIZE)
 		{
-			if (!is_user_vaddr(page) || (pml4_get_page(thread_current()->pml4, page) == NULL))
+			if (!is_valid_write(page))
 			{
 				is_valid = 0;
 				break;
@@ -101,7 +102,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		}
 
 		// 유효한 주소, 콘솔 출력
-		if (is_valid && is_valid_write(fd , buffer))
+		if (fd == STDOUT_FILENO && is_valid)
 		{
 			putbuf(buffer, size);
 			f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
