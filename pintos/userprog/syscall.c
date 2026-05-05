@@ -37,17 +37,13 @@ void syscall_init(void)
 			  FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-/*
-buffer data 유효성 검사 의사 코드
-addr_compare(ptr)
+bool is_valid_write(int fd ,const char * buffer)
 {
-	//인자값 확인 필요
-	if ( (f->R.rdi == stdout) && (is_user_vaddr(ptr)) && (pml4_get_page()) )
-		return true
-	else 안맞을 때
-		return -1;
+if((fd == 1) && (is_user_vaddr(buffer)))
+	return true;
+else
+	return false;
 }
-*/
 
 /* 메인 시스템 콜 인터페이스 */
 void syscall_handler(struct intr_frame *f UNUSED)
@@ -105,7 +101,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		}
 
 		// 유효한 주소, 콘솔 출력
-		if (fd == STDOUT_FILENO && is_valid)
+		if (is_valid && is_valid_write(fd , buffer))
 		{
 			putbuf(buffer, size);
 			f->R.rax = size; // 원래는 실제 적힌 사이즈를 반환해야하지만, 현재 테스트에서는 size를 반환하는걸로 만족
@@ -124,6 +120,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
 		// 종료 상태 저장
 		thread_current()->exit_status = exit_status;
+		printf ("%s: exit(%d)\n", thread_name(), exit_status);
 		thread_exit();
 
 	default:
