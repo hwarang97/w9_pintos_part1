@@ -17,6 +17,7 @@
 #include "threads/thread.h"
 #include "threads/mmu.h"
 #include "threads/vaddr.h"
+#include "threads/malloc.h"
 #include "intrinsic.h"
 #ifdef VM
 #include "vm/vm.h"
@@ -165,7 +166,8 @@ error:
  * 실패하면 -1을 반환한다. */
 int process_exec(void *f_name)
 {
-	char *file_name = f_name;
+	/* 현재 레벨에서 인자를 문자열 포인터로 해석 */ 
+	char *file_name = f_name; 
 	bool success;
 
 	/* thread 구조체 안의 intr_frame은 사용할 수 없다.
@@ -178,7 +180,7 @@ int process_exec(void *f_name)
 	/* 먼저 현재 문맥을 정리한다. */
 	process_cleanup();
 
-	/* 그 다음 바이너리를 불러온다. */
+	/* 실행전 메모리 준비 함수, 메모리 작업으로 추상화 */
 	success = load(file_name, &_if);
 
 	/* load에 실패하면 종료한다. */
@@ -330,13 +332,60 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
 static bool
 load(const char *file_name, struct intr_frame *if_)
 {
+	/*
+	이 함수는 유저 스레드가 사용할 내용을 유저 영역에 생성하고 매핑하는 함수
+	유저 가상 메모리에 파일 내용을 적재
+	thread->pml4를 생성하고, 매핑 정보를 추가
+	*/
+
+	#define MAX_ARGC 100 // 임의로 정한 인자 최대값
+
 	struct thread *t = thread_current();
 	struct ELF ehdr;
 	struct file *file = NULL;
 	off_t file_ofs;
 	bool success = false;
 	int i;
+	char* copy_file_name = NULL;
+	size_t file_name_len = 0;
 
+	/* 파일 이름이 없거나 빈 문자열이라면 실패 */
+	if (file_name == NULL || strlen(file_name) == 0) {
+		goto done;
+	}
+	
+	file_name_len = strlen(file_name); // \0 문자까지 고려하지 않은 길이
+	copy_file_name = malloc(file_name_len + 1);  // 길이가 얼마나 될지 모르기에 힙 영역 사용
+	
+	/* 메모리 할당 실패시 */ 
+	if (copy_file_name == NULL) {
+		goto done;
+	}
+
+	/* 문자열 복사, 저장 */
+	strlcpy(copy_file_name, file_name, file_name_len + 1);
+
+	/* 토큰단위로 저장하기 */
+	char* argv[MAX_ARGC]; // 토큰갯수를 알 수 없으므로, 임의의 고정 배열을 선언 (작으니 커널 스택 영역에 할당) 
+	char* save_point = NULL;
+	char* token;
+	char* exec_file_name = NULL;
+	int argc = 0;
+
+	for (token = strtok_r(copy_file_name, " ", &save_point); token != NULL; token = strtok_r(NULL, " ", &save_point)) {
+		/* 지정된 배열 크기보다 큰 경우 실패 */
+		if (argc >= MAX_ARGC) {
+			goto done;
+		}
+		argv[argc++] = token;
+	}
+
+	/* 빈 문자열만 있었던 경우 실패 */
+	if (argc == 0) {
+		goto done;
+	}
+	exec_file_name = argv[0];
+		
 	/* 페이지 디렉터리를 할당하고 활성화한다. */
 	t->pml4 = pml4_create();
 	if (t->pml4 == NULL)
@@ -344,10 +393,10 @@ load(const char *file_name, struct intr_frame *if_)
 	process_activate(thread_current());
 
 	/* 실행 파일을 연다. */
-	file = filesys_open(file_name);
+	file = filesys_open(exec_file_name);
 	if (file == NULL)
 	{
-		printf("load: %s: open failed\n", file_name);
+		printf("load: %s: open failed\n", exec_file_name);
 		goto done;
 	}
 
@@ -355,7 +404,7 @@ load(const char *file_name, struct intr_frame *if_)
 	if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr || memcmp(ehdr.e_ident, "\177ELF\2\1\1", 7) || ehdr.e_type != 2 || ehdr.e_machine != 0x3E // amd64
 		|| ehdr.e_version != 1 || ehdr.e_phentsize != sizeof(struct Phdr) || ehdr.e_phnum > 1024)
 	{
-		printf("load: %s: error loading executable\n", file_name);
+		printf("load: %s: error loading executable\n", exec_file_name);
 		goto done;
 	}
 
@@ -424,15 +473,49 @@ load(const char *file_name, struct intr_frame *if_)
 	/* 시작 주소. */
 	if_->rip = ehdr.e_entry;
 
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: argument passing을 구현한다.
-	 * TODO: project2/argument_passing.html을 참고한다. */
+	/* 스택 영역에 문자열 삽입 */
+	int index;
+	size_t size;
+	for(index = argc - 1; index >= 0; index--) {
+		size = strlen(argv[index]) + 1;
+		if_->rsp -= size;
+		memcpy((void *)if_->rsp, argv[index], size); // rsp를 이용해서 삽입 (토큰화해서 넣어준다. 일일히 넣으면 느리나?)
+		argv[index] = (char *)if_->rsp; // 참조할 주소를 저장
+	}
+
+	/* 정렬을 위한 padding 추가 */
+	size_t padding_size = if_->rsp % sizeof(void *); 
+	if_->rsp -= padding_size;
+	memset((void *)if_->rsp, 0, padding_size);
+
+	/* 배열의 마지막을 의미하는 NULL 추가 */
+	char* null_ptr = NULL;
+	if_->rsp -= sizeof(null_ptr); 
+	memcpy((void *)if_->rsp, &null_ptr, sizeof(null_ptr));
+
+	/* 인자 주소를 역순으로 추가 */
+	for (index = argc - 1; index >= 0; index--) {
+		if_->rsp -= sizeof(argv[index]);
+		memcpy((void *)if_->rsp, &argv[index], sizeof(argv[index]));
+	} 
+
+	/* argv 위치 저장 */
+	void* argv_start = (void *)if_->rsp;
+
+	/* fake address 추가 */ // 이건 왜 쓰는건지, NULL로만 써야하는건지 질문
+	if_->rsp -= sizeof(null_ptr);
+	memcpy((void *)if_->rsp, &null_ptr, sizeof(null_ptr));
+
+	/* rdi(argc), rsi(argv) 저장 */
+	if_->R.rdi = argc;
+	if_->R.rsi = (uint64_t)argv_start;
 
 	success = true;
 
 done:
 	/* load 성공 여부와 관계없이 여기로 도달한다. */
 	file_close(file);
+	free(copy_file_name);
 	return success;
 }
 
