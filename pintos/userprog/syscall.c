@@ -7,6 +7,7 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
+#include "threads/init.h"
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -123,6 +124,9 @@ void syscall_handler(struct intr_frame *f UNUSED)
 		thread_current()->exit_status = exit_status;
 		printf ("%s: exit(%d)\n", thread_name(), exit_status);
 		thread_exit();
+
+	case SYS_HALT:
+		power_off();
 
 	default:
 		thread_exit(); // R.rax에 대한 예외처리 : 프로세스 종료, 에러 출력, rax에 반환값 -1 (그러나 rax가 uint64로 선언되었기에 가능여부 확인 필요)
