@@ -10,6 +10,7 @@
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "devices/timer.h"
 #include "threads/flags.h"
 #include "threads/init.h"
 #include "threads/interrupt.h"
@@ -23,7 +24,7 @@
 #endif
 
 static void process_cleanup(void);
-static bool load(const char *file_name, struct intr_frame *if_);
+static bool load(struct intr_frame *if_, char *file_name, int argc, char *argv[]);
 static void initd(void *f_name);
 static void __do_fork(void *);
 
@@ -165,22 +166,24 @@ error:
  * 실패하면 -1을 반환한다. */
 int process_exec(void *f_name)
 {
+	char *cpy_filename = f_name; 
 	char *file_name = f_name;
 	char *savepoint;
 	int argc = 0;
 	char *argv[100];
 	bool success;
-	// 문자열 나누기
-	char *token = strtok_r(file_name, " ", &savepoint);
+	char *token = strtok_r(cpy_filename, " ", &savepoint);
 
-	// 유저 문자열 복사
+	// 유저 나누기 / argv배열 저장
 	while(token != NULL){
 		argv[argc] = token;
+		printf("argv[%d] = %s\n",argc, argv[argc]);
 		argc++;
 
 		token = strtok_r(NULL, " ", &savepoint);
 	}
 	argv[argc] = NULL;
+	printf("null_check : %s\n",argv[argc] );
 	
 
 	/* thread 구조체 안의 intr_frame은 사용할 수 없다.
@@ -194,10 +197,10 @@ int process_exec(void *f_name)
 	process_cleanup();
 
 	/* 그 다음 바이너리를 불러온다. */
-	success = load(file_name, &_if);
+	success = load(&_if, argv[0], argc, argv);
 
 	/* load에 실패하면 종료한다. */
-	palloc_free_page(file_name);
+	palloc_free_page(cpy_filename);
 	if (!success)
 		return -1;
 
@@ -218,10 +221,12 @@ int process_wait(tid_t child_tid UNUSED)
 	/* XXX: 힌트) process_wait(initd)에서 PintOS가 종료된다.
 	 * XXX:       process_wait을 구현하기 전에는 여기에 무한 루프를
 	 * XXX:       추가하는 것을 권장한다. */
-	while (1)
-	{
-	}
-	return -1;
+	// while (1)
+	// {
+	// }
+	// return -1;
+	timer_sleep(100);
+	return 0;
 }
 
 /* 프로세스를 종료한다. 이 함수는 thread_exit()에서 호출된다. */
@@ -343,7 +348,7 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
  * 초기 스택 포인터를 *RSP에 저장한다.
  * 성공하면 true, 실패하면 false를 반환한다. */
 static bool
-load(const char *file_name, struct intr_frame *if_)
+load(struct intr_frame *if_, char *file_name, int argc, char *argv[])
 {
 	struct thread *t = thread_current();
 	struct ELF ehdr;
@@ -438,12 +443,19 @@ load(const char *file_name, struct intr_frame *if_)
 
 	/* 시작 주소. */
 	if_->rip = ehdr.e_entry;
+	char *arg_addr[argc];
 
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: argument passing을 구현한다.
-	 * TODO: project2/argument_passing.html을 참고한다. */
+	for(int i = argc -1; i >= 0; i--){
+		int len = strlen(argv[i]) + 1;	// '\0' 자리 추가
+		if_->rsp -= len;					// rsp 주소 문자열만큼 내리기
+		memcpy((void *)if_->rsp, argv[i], len);
+		arg_addr[i] = (char *)if_->rsp;
+	}
 
-
+	if_->rsp -= if_->rsp % 8;
+	if_->rsp -= 8;
+	if_->rsp = 0;
+	
 
 	success = true;
 
