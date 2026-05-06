@@ -27,6 +27,30 @@ static void process_cleanup(void);
 static bool load(const char *file_name, struct intr_frame *if_);
 static void initd(void *f_name);
 static void __do_fork(void *);
+static void copy_exec_name(char* dst, size_t size, const char* src);
+
+static void copy_exec_name(char* dst, size_t size, const char* src) {
+	
+	size_t idx = 0;
+
+	// 엣지 케이스 처리 
+	if (dst == NULL || src==NULL || size == 0) {
+		return;
+	}
+
+	// 앞 공백 무시
+	while (*src == ' ') {
+		src++;
+	}
+
+	while( (src[idx] != '\0') && (src[idx] != ' ') && (idx + 1< size)) {
+		dst[idx] = src[idx];
+		idx++;
+	}
+
+	// 종료 표시
+	dst[idx] = '\0';
+}
 
 /* initd와 다른 프로세스에서 공통으로 쓰는 프로세스 초기화 함수. */
 static void
@@ -43,6 +67,7 @@ process_init(void)
 tid_t process_create_initd(const char *file_name)
 {
 	char *fn_copy;
+	char exec_file_name[16];
 	tid_t tid;
 
 	/* FILE_NAME의 복사본을 만든다.
@@ -53,7 +78,8 @@ tid_t process_create_initd(const char *file_name)
 	strlcpy(fn_copy, file_name, PGSIZE);
 
 	/* FILE_NAME을 실행할 새 스레드를 만든다. */
-	tid = thread_create(file_name, PRI_DEFAULT, initd, fn_copy);
+	copy_exec_name(exec_file_name, sizeof(exec_file_name), file_name);
+	tid = thread_create(exec_file_name, PRI_DEFAULT, initd, fn_copy);
 	if (tid == TID_ERROR)
 		palloc_free_page(fn_copy);
 	return tid;
