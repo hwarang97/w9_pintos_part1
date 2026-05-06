@@ -23,7 +23,7 @@
 #endif
 
 static void process_cleanup(void);
-static bool load(const char *file_name, struct intr_frame *if_);
+static bool load(const char *file_name, char *head, struct intr_frame *if_);
 static void initd(void *f_name);
 static void __do_fork(void *);
 
@@ -167,6 +167,9 @@ int process_exec(void *f_name)
 {
 	char *file_name = f_name;
 	bool success;
+	char *fn_full_copy; 
+	char *file_name_copy;
+	char *save_ptr;
 
 	/* thread 구조체 안의 intr_frame은 사용할 수 없다.
 	 * 현재 스레드가 다시 스케줄될 때 실행 정보가 그 멤버에 저장되기 때문이다. */
@@ -178,11 +181,38 @@ int process_exec(void *f_name)
 	/* 먼저 현재 문맥을 정리한다. */
 	process_cleanup();
 
+	/* 	
+	먼저 페이지를 할당 받는다.
+	커널 전용 임시 버퍼를 만드는 것이므로 User Page가 아닌 Kernel Page를 받는다.
+
+	*/
+	fn_full_copy = palloc_get_page(PAL_ZERO);
+	file_name_copy = palloc_get_page(PAL_ZERO);
+
+	if (fn_full_copy == NULL)
+		return TID_ERROR;
+
+	strlcpy(fn_full_copy, f_name, PGSIZE);  
+	
+	strlcpy(file_name_copy, f_name, PGSIZE);
+
+	/* copy된 fn_copy를 가지고, 파싱을 한다.
+
+	여기서는 명령어 부분을 잘라주는 걸로 족하니 1번만 사용한다.
+
+	그렇다면 굳이 save_ptr도 필요없지 않을까? 일단 signature 만족을 위해 써주자.
+	
+	고민해봐야할 점은, 공백이 다중일 때 어떻게 처리할 것인가? => strtok_r이 알아서 처리해 줌
+	*/
+	strtok_r(file_name_copy, " ", &save_ptr);
+
+
 	/* 그 다음 바이너리를 불러온다. */
-	success = load(file_name, &_if);
+	success = load(file_name_copy, fn_full_copy, &_if); //load 함수 수정
 
 	/* load에 실패하면 종료한다. */
-	palloc_free_page(file_name);
+	palloc_free_page(file_name_copy); //file_name을 fn_copy로 변경  
+	palloc_free_page(fn_full_copy);
 	if (!success)
 		return -1;
 
@@ -328,7 +358,7 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
  * 초기 스택 포인터를 *RSP에 저장한다.
  * 성공하면 true, 실패하면 false를 반환한다. */
 static bool
-load(const char *file_name, struct intr_frame *if_)
+load(const char *file_name, char *full_command, struct intr_frame *if_) 
 {
 	struct thread *t = thread_current();
 	struct ELF ehdr;
@@ -424,10 +454,11 @@ load(const char *file_name, struct intr_frame *if_)
 	/* 시작 주소. */
 	if_->rip = ehdr.e_entry;
 
-	/* TODO: 여기에 코드를 작성한다.
-	 * TODO: argument passing을 구현한다.
-	 * TODO: project2/argument_passing.html을 참고한다. */
+	/* passing을 해서
+	어떻게 스택에 하나하나 넣을 것인가 
+	 */
 
+	 //for문을 통해 반복하면서 
 	success = true;
 
 done:
