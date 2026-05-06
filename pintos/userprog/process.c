@@ -455,10 +455,39 @@ load(const char *file_name, char *full_command, struct intr_frame *if_)
 	if_->rip = ehdr.e_entry;
 
 	/* passing을 해서
-	어떻게 스택에 하나하나 넣을 것인가 
+	어떻게 스택에 하나하나 넣을 것인가. argc와 argv는 갯수
+	현재 전체 명령어를 full command로 받은 상태 
+	memcpy를 통해 넣기.
 	 */
 
-	 //for문을 통해 반복하면서 
+   	char *token, *save_ptr;
+	char argv[64]; //왜 64?
+	int argc = 0;
+	uintptr_t addresses[64];
+
+
+	for (token = strtok_r(full_command, " ", &save_ptr); token != NULL; token = strtok_r(NULL, " ", &save_ptr)){
+		argv[argc] = token;
+		argc++;
+	}
+
+	int count = argc;
+	while (count > 0)
+	{
+	if_->rsp -= strlen(argv[count]+1);
+	memcpy(if_->rsp,argv[count],strlen(argv[count])+1);
+	count --;
+	}
+
+	if_->rsp -= if_->rsp%8; // 8Byte Padding
+
+	if_->rsp -= 8;
+	memset(if_->rsp, 0,8); //Null Pointer
+
+
+	if_->R.rdi = argc;
+	if_->R.rsi = argv;
+
 	success = true;
 
 done:
