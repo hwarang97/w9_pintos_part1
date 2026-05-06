@@ -1,5 +1,6 @@
 #include "userprog/process.h"
 #include <debug.h>
+#include <devices/timer.h>
 #include <inttypes.h>
 #include <round.h>
 #include <stdio.h>
@@ -231,10 +232,12 @@ int process_wait(tid_t child_tid UNUSED)
 	/* XXX: 힌트) process_wait(initd)에서 PintOS가 종료된다.
 	 * XXX:       process_wait을 구현하기 전에는 여기에 무한 루프를
 	 * XXX:       추가하는 것을 권장한다. */
-	while (1)
-	{
-	}
-	return -1;
+	// while (1)
+	// {
+	// }
+	// return -1;
+	timer_sleep(100);
+	return 0;
 }
 
 /* 프로세스를 종료한다. 이 함수는 thread_exit()에서 호출된다. */
